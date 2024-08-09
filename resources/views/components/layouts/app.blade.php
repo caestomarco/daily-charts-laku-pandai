@@ -4,8 +4,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{{asset('icon.png')}}" type="image/x-icon">
     <title>{{ $title ?? 'Page Title' }}</title>
 
+    @livewireStyles
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 
@@ -91,13 +93,13 @@
                 </ul>
             </div> --}}
         </div>
-
+        
         {{ $slot }}
     </main>
 
     @livewireScripts
-    
     @stack('additional-script')
+    {{-- @livewireScriptConfig  --}}
 </body>
 
 </html>

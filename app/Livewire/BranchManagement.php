@@ -44,22 +44,11 @@ class BranchManagement extends Component
         return view('livewire.branch-management')->layout('components.layouts.app', compact('title'));
     }
 
-    public function updatedFile()
+    public function updated($propertyName)
     {
-        $this->validateOnly('file');
-        $this->fileValidated = true;
-    }
+        $this->validateOnly($propertyName);
 
-    public function updatedBranchID()
-    {
-        $this->validateOnly('branchID');
-        $this->branchIDValidated = true;
-    }
-
-    public function updatedBranchName()
-    {
-        $this->validateOnly('branchName');
-        $this->branchNameValidated = true;
+        $this->{$propertyName . 'Validated'} = true;
     }
 
     public function updatedBranchStatus()

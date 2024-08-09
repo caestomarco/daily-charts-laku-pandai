@@ -1,4 +1,5 @@
-<div @class(['container-fluid d-flex flex-column', 'gap-2 me-0' => true]) style="width: 83%">
+<div class="container-fluid d-flex flex-column gap-2 me-0" style="width: 83%">
+
     {{-- BREADCRUMBS --}}
     <nav aria-label="breadcrumb">
         <ol @class(['breadcrumb ', 'mx-4 mt-4' => true]) class="">
@@ -27,12 +28,8 @@
     @endif
 
     {{-- PAGE HEADER --}}
-    <div @class([
-        'd-flex justify-content-between ',
-        'mx-4 p-3 rounded-3',
-        'bg-light-subtle shadow-sm' => true,
-    ])>
-        <h3 @class(['mb-0', 'text-warning-emphasis fw-bold' => true])>Manajemen Agen</h3>
+    <div class="d-flex justify-content-between mx-4 p-3 rounded-3 bg-light-subtle shadow">
+        <h3 class="mb-0 text-warning-emphasis fw-bold">Manajemen Agen</h3>
         <div>
             <button type="button" class="btn btn-secondary fw-semibold" data-bs-toggle="modal" data-bs-target="#import-agent-modal">
                 Import Data Agen
@@ -44,7 +41,7 @@
     </div>
 
     {{-- POWERGRID TABLE --}}
-    <div @class(['mx-4 p-3 rounded-3', 'bg-light-subtle shadow-sm' => true])>
+    <div class="mx-4 p-3 rounded-3 bg-light-subtle shadow">
         @livewire('agent-table')
     </div>
 

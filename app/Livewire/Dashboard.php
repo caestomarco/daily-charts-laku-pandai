@@ -13,40 +13,24 @@ class Dashboard extends Component
 {
     use WithFileUploads;
 
+    public $filterList = ['Transaksi Harian', 'Transaksi Produk Terbesar', 'Transaksi Agen Terbesar', 'Status Transaksi'];
+    public $selectedChart = 'Transaksi Harian';
+    public $selectedDate;
+    public array $labels = [];
+    public array $datasets = [];
+    public $mostFrequentAgentTransactions = [];
+
     #[Validate('required', message: 'Please provide a file')]
     #[Validate('mimes:xlsx,xls', message: 'Please provide a valid .xlsx file')]
     public $file;
-
-    public $filterList = ['Transaksi Harian', 'Transaksi Terbesar', 'Transaksi Agen Terbesar'];
-    public $selectedFilter;
-    public array $dataset = [];
-    public array $labels = [];
 
     public $fileValidated = false;
 
     public function mount()
     {
-        $this->selectedFilter = $this->filterList[0];
+        $this->selectedDate = now()->format('d/m/Y');
 
-        if ($this->selectedFilter === $this->filterList[0])
-        {
-            $this->labels[] = $this->getTransaksiHarianLabels();
-            $this->dataset = [
-                [
-                    'type' => 'line',
-                    'label' => 'Logged In',
-                    'backgroundColor' => 'rgba(15,64,97,255)',
-                    'borderColor' => 'rgba(15,64,97,255)',
-                    'data' => $this->getRandomData(),
-                ],
-                [
-                    'label' => 'Logged In',
-                    'backgroundColor' => 'rgba(255,230,170,0.6)',
-                    'borderColor' => 'rgb(255 230 170)',
-                    'data' => $this->getRandomData(),
-                ],
-            ];
-        }
+        $this->setTransaksiHarianChart();
     }
 
     public function render()
@@ -56,15 +40,55 @@ class Dashboard extends Component
         return view('livewire.dashboard')->layout('components.layouts.app', compact('title'));
     }
 
-    public function updatedFile()
+    public function updated($propertyName)
     {
-        $this->validateOnly('file');
-        $this->fileValidated = true;
+        $this->validateOnly($propertyName);
+
+        $this->{$propertyName . 'Validated'} = true;
     }
 
     public function setFilter($value)
     {
-        $this->selectedFilter = $value;
+        $this->selectedChart = $value;
+
+        if ($value === 'Transaksi Harian')
+        {
+            $this->setTransaksiHarianChart();
+
+            $this->dispatch('update-transaksi-harian-chart', [
+                'labels' => $this->labels,
+                'datasets' => $this->datasets,
+                'selectedDate' => $this->selectedDate,
+                'selectedChart' => $this->selectedChart,
+            ]);
+        }
+        elseif ($value === 'Transaksi Produk Terbesar')
+        {
+            $this->setTransaksiProdukTerbesarChart();
+
+            $this->dispatch('update-transaksi-produk-terbesar-chart', [
+                'labels' => $this->labels,
+                'datasets' => $this->datasets,
+                'selectedDate' => $this->selectedDate,
+                'selectedChart' => $this->selectedChart,
+            ]);
+        }
+        elseif ($value === 'Transaksi Agen Terbesar')
+        {
+            $this->mostFrequentAgentTransactions = [];
+            $this->setTransaksiAgenTerbesarChart();
+        }
+        elseif ($value === 'Status Transaksi')
+        {
+            $this->setStatusTransaksiChart();
+
+            $this->dispatch('update-status-transaksi-chart', [
+                'labels' => $this->labels,
+                'datasets' => $this->datasets,
+                'selectedDate' => $this->selectedDate,
+                'selectedChart' => $this->selectedChart,
+            ]);
+        }
     }
 
     public function submitFile()
@@ -77,9 +101,18 @@ class Dashboard extends Component
 
             Excel::import(new DailyTransactionsImport, storage_path('app/files/' . $this->file->getClientOriginalName()));
 
+            $this->setTransaksiHarianChart();
+
             session()->flash('success', 'Berhasil mengimpor data transaksi!');
 
             $this->dispatch('hide-import-transaction-modal');
+
+            $this->dispatch('update-transaksi-harian-chart', [
+                'labels' => $this->labels,
+                'datasets' => $this->datasets,
+                'selectedDate' => $this->selectedDate,
+                'selectedChart' => $this->filterList[0],
+            ]);
 
             $this->reset();
         }
@@ -93,24 +126,136 @@ class Dashboard extends Component
         }
     }
 
-    private function getTransaksiHarianLabels()
+    private function setTransaksiHarianChart()
     {
-        $thisMonthTransactions = DailyTransaction::query()->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->get();
+        $thisMonthDailyTransactions = DailyTransaction::query()
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->get()
+            ->sortBy('created_at')
+            ->groupBy(function ($transaction)
+            {
+                return $transaction->created_at->format('d/m/Y');
+            });
 
-        $groupEachDayTransactions = $thisMonthTransactions->sortBy('created_at')->groupBy(function ($transaction)
+        $totalDailyTransactions = [];
+        $totalDailyNominals = [];
+
+        foreach ($thisMonthDailyTransactions as $transaction)
         {
-            return $transaction->created_at->format('d M');
-        })->keys()->toArray();
+            $totalDailyTransactions[] = $transaction->count();
+            $totalDailyNominals[] = $transaction->sum('total');
+        }
 
-        return $groupEachDayTransactions;
+        $this->labels = $thisMonthDailyTransactions->keys()->toArray();
+        $this->datasets = [
+            [
+                'type' => 'line',
+                'label' => 'Transaksi',
+                'backgroundColor' => '#00a25099',
+                'borderColor' => '#00a250',
+                'pointStyle' => 'rect',
+                'pointRadius' => 25,
+                'pointHoverRadius' => 20,
+                'borderWidth' => 2,
+                'yAxisID' => 'y1',
+                'data' => $totalDailyTransactions,
+            ],
+            [
+                'type' => 'bar',
+                'label' => 'Nominal',
+                'backgroundColor' => '#fbb031b3',
+                'borderColor' => '#fbb031',
+                'borderWidth' => 2,
+                'yAxisID' => 'y',
+                'data' => $totalDailyNominals,
+            ],
+        ];
     }
 
-    private function getRandomData()
+    private function setTransaksiProdukTerbesarChart()
     {
-        $data = [];
-        for ($i = 0; $i < count($this->getTransaksiHarianLabels()); $i++) {
-            $data[] = rand(10, 100);
+        $todayProductTransactions = DailyTransaction::query()
+            ->with('product')
+            ->whereDay('created_at', $this->selectedDate)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->get()
+            ->groupBy(function ($transaction)
+            {
+                return $transaction->product->description;
+            });
+
+        $this->labels = collect($todayProductTransactions)->sortDesc()->take(10)->sort()->keys()->toArray();
+        $this->datasets = [
+            [
+                'label' => 'Transaksi',
+                'backgroundColor' => '#00a250b3',
+                'borderColor' => '#00a250',
+                'borderWidth' => 2,
+                'barThickness' => 30,
+                'yAxisID' => 'y',
+                'data' => collect($todayProductTransactions)->sortDesc()->take(10)->sort()->map(function ($item)
+                {
+                    return $item->count();
+                })->values()->all(),
+            ],
+        ];
+    }
+
+    private function setTransaksiAgenTerbesarChart()
+    {
+        $todayAgentTransactions = DailyTransaction::query()
+            ->with(['agent'])
+            ->whereDay('created_at', $this->selectedDate)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->get()
+            ->groupBy(function ($transaction)
+            {
+                return $transaction->agent->name;
+            });
+
+        foreach (collect($todayAgentTransactions)->sortDesc()->take(10) as $transaction)
+        {
+            $this->mostFrequentAgentTransactions[] = [
+                'branch' => $transaction->first()->agent->branch,
+                'account' => $transaction->first()->agent->account,
+                'name' => $transaction->first()->agent->name,
+                'transaction' => $transaction->count(),
+                // FORMAT NOMINAL
+                'nominal' => number_format($transaction->sum('total'), 0, ',', '.'),
+            ];
         }
-        return $data;
+    }
+
+    private function setStatusTransaksiChart()
+    {
+        $todayStatusTransactions = DailyTransaction::query()
+            ->whereDay('created_at', $this->selectedDate)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->get()
+            ->groupBy(function ($transaction)
+            {
+                return $transaction->status;
+            });
+
+        $this->labels = collect($todayStatusTransactions)->keys()->toArray();
+        $this->datasets = [
+            [
+                'label' => 'Total Transaksi',
+                'backgroundColor' => 
+                [
+                    'rgba(50, 220, 50, 0.8)',
+                    'rgba(255, 0, 0, 1)',
+                    'rgba(18, 18, 18, 0.5)',
+                ],
+                'data' => collect($todayStatusTransactions)->map(function ($item)
+                {
+                    return $item->count();
+                })->values()->all(),
+            ],
+        ];
     }
 }

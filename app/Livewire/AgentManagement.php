@@ -59,40 +59,11 @@ class AgentManagement extends Component
         return view('livewire.agent-management', compact('branchList'))->layout('components.layouts.app', compact('title'));
     }
 
-    public function updatedFile()
+    public function updated($propertyName)
     {
-        $this->validateOnly('file');
-        $this->fileValidated = true;
-    }
+        $this->validateOnly($propertyName);
 
-    public function updatedAgentID()
-    {
-        $this->validateOnly('agentID');
-        $this->agentIDValidated = true;
-    }
-
-    public function updatedAgentName()
-    {
-        $this->validateOnly('agentName');
-        $this->agentNameValidated = true;
-    }
-
-    public function updatedBranchID()
-    {
-        $this->validateOnly('branchID');
-        $this->branchIDValidated = true;
-    }
-
-    public function updatedAgentAccount()
-    {
-        $this->validateOnly('agentAccount');
-        $this->agentAccountValidated = true;
-    }
-
-    public function updatedAgentStatus()
-    {
-        $this->validateOnly('agentStatus');
-        $this->agentStatusValidated = true;
+        $this->{$propertyName . 'Validated'} = true;
     }
 
     public function submitFile()

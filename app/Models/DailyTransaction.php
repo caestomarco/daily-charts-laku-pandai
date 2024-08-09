@@ -40,11 +40,6 @@ class DailyTransaction extends Model
         return $this->belongsTo(Agent::class);
     }
 
-    public function branch()
-    {
-        return $this->belongsTo(Branch::class);
-    }
-
     public function product()
     {
         return $this->belongsTo(Product::class);
