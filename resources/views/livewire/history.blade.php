@@ -10,7 +10,7 @@
 
     {{-- PAGE HEADER --}}
     <div class="d-flex justify-content-between mx-4 p-3 rounded-3 bg-light-subtle shadow">
-        <h3 class="mb-0 text-warning-emphasis fw-bold">Riwayat Transaksi Laku Pandai</h3>
+        <h3 class="mb-0 text-warning-emphasis fw-bold">Riwayat Transaksi LAKU PANDAI</h3>
         <div>
             
         </div>

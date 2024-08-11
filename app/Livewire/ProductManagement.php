@@ -28,7 +28,7 @@ class ProductManagement extends Component
     #[Validate('string', message: 'Deskripsi produk harus berupa teks!')]
     public $productDescription;
 
-    public $fileValidated = false;
+    public $isFileValidated = false;
     public $productIDValidated = false;
     public $productDescriptionValidated = false;
 
@@ -39,11 +39,11 @@ class ProductManagement extends Component
         return view('livewire.product-management')->layout('components.layouts.app', compact('title'));
     }
 
-    public function updated($propertyName)
+    public function updated($property)
     {
-        $this->validateOnly($propertyName);
+        $this->validateOnly($property);
 
-        $this->{$propertyName . 'Validated'} = true;
+        $this->{$property . 'Validated'} = true;
     }
 
     public function submitFile()
@@ -62,7 +62,7 @@ class ProductManagement extends Component
 
             $this->dispatch('pg:eventRefresh-ProductTable');
 
-            $this->reset();
+            $this->reset('file', 'isFileValidated');
         }
         catch (\Throwable $th)
         {

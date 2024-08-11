@@ -7,30 +7,55 @@ use Livewire\WithFileUploads;
 use Livewire\Attributes\Validate;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\DailyTransactionsImport;
+use App\Models\Agent;
 use App\Models\DailyTransaction;
 
 class Dashboard extends Component
 {
     use WithFileUploads;
 
-    public $filterList = ['Transaksi Harian', 'Transaksi Produk Terbesar', 'Transaksi Agen Terbesar', 'Status Transaksi'];
-    public $selectedChart = 'Transaksi Harian';
-    public $selectedDate;
-    public array $labels = [];
-    public array $datasets = [];
-    public $mostFrequentAgentTransactions = [];
+    // CHART VARIABLES
+    public $chartList = ['Transaksi Harian', 'Transaksi Produk Terbesar', 'Transaksi Agen Terbesar', 'Status Transaksi'];
+    public $selectedChart;
+    public $currentDate;
+    public $currentMonth;
+    public array $chartLabels = [];
+    public array $chartDatasets = [];
+
+    // DAILY TRANSACTIONS PROPERTIES
+    public $totalToday = [
+        'transactions' => 0,
+        'nominals' => 0,
+    ];
+    public $todayTopTransaction = [
+        'product_name' => '',
+        'product_count' => 0,
+        'agent_branch' => '',
+        'agent_count' => 0,
+        'agent_nominals' => 0,
+        'agent_total' => 0,
+    ];
+    public $totalDailyNominals = [];
+    public $totalDailyTransactions = [];
+    public bool $isChartStonk = false;
+    public bool $isThereNewAgent = false;
+    public array $topTenAgentTransactions = [];
 
     #[Validate('required', message: 'Please provide a file')]
     #[Validate('mimes:xlsx,xls', message: 'Please provide a valid .xlsx file')]
     public $file;
 
-    public $fileValidated = false;
+    public $isFileValidated = false;
 
     public function mount()
     {
-        $this->selectedDate = now()->format('d/m/Y');
+        $this->selectedChart = $this->chartList[0];
+        $this->currentMonth = now()->format('m');
+        $this->currentDate = now()->month(intval($this->currentMonth))->subDay(4);
 
-        $this->setTransaksiHarianChart();
+        // dd($this->currentDate->translatedFormat('l, d F Y'));
+
+        $this->getDailyTransactions();
     }
 
     public function render()
@@ -40,52 +65,52 @@ class Dashboard extends Component
         return view('livewire.dashboard')->layout('components.layouts.app', compact('title'));
     }
 
-    public function updated($propertyName)
+    public function updated($property)
     {
-        $this->validateOnly($propertyName);
+        $this->validateOnly($property);
 
-        $this->{$propertyName . 'Validated'} = true;
+        $this->{$property . 'Validated'} = true;
     }
 
-    public function setFilter($value)
+    public function setChart($value)
     {
         $this->selectedChart = $value;
 
         if ($value === 'Transaksi Harian')
         {
-            $this->setTransaksiHarianChart();
+            $this->getDailyTransactions();
 
-            $this->dispatch('update-transaksi-harian-chart', [
-                'labels' => $this->labels,
-                'datasets' => $this->datasets,
-                'selectedDate' => $this->selectedDate,
+            $this->dispatch('update-daily-transactions-chart', [
+                'labels' => $this->chartLabels,
+                'datasets' => $this->chartDatasets,
+                'currentDate' => $this->currentDate,
                 'selectedChart' => $this->selectedChart,
             ]);
         }
         elseif ($value === 'Transaksi Produk Terbesar')
         {
-            $this->setTransaksiProdukTerbesarChart();
+            $this->getTopTenProductTransactions();
 
-            $this->dispatch('update-transaksi-produk-terbesar-chart', [
-                'labels' => $this->labels,
-                'datasets' => $this->datasets,
-                'selectedDate' => $this->selectedDate,
+            $this->dispatch('update-top-ten-product-transactions-chart', [
+                'labels' => $this->chartLabels,
+                'datasets' => $this->chartDatasets,
+                'currentDate' => $this->currentDate,
                 'selectedChart' => $this->selectedChart,
             ]);
         }
         elseif ($value === 'Transaksi Agen Terbesar')
         {
-            $this->mostFrequentAgentTransactions = [];
-            $this->setTransaksiAgenTerbesarChart();
+            $this->topTenAgentTransactions = [];
+            $this->getTopTenAgentTransactions();
         }
         elseif ($value === 'Status Transaksi')
         {
-            $this->setStatusTransaksiChart();
+            $this->getTodayTransactionsStatus();
 
-            $this->dispatch('update-status-transaksi-chart', [
-                'labels' => $this->labels,
-                'datasets' => $this->datasets,
-                'selectedDate' => $this->selectedDate,
+            $this->dispatch('update-today-transactions-status-chart', [
+                'labels' => $this->chartLabels,
+                'datasets' => $this->chartDatasets,
+                'currentDate' => $this->currentDate,
                 'selectedChart' => $this->selectedChart,
             ]);
         }
@@ -101,20 +126,20 @@ class Dashboard extends Component
 
             Excel::import(new DailyTransactionsImport, storage_path('app/files/' . $this->file->getClientOriginalName()));
 
-            $this->setTransaksiHarianChart();
+            $this->getDailyTransactions();
 
             session()->flash('success', 'Berhasil mengimpor data transaksi!');
 
-            $this->dispatch('hide-import-transaction-modal');
+            $this->dispatch('hide-import-daily-transaction-modal');
 
-            $this->dispatch('update-transaksi-harian-chart', [
-                'labels' => $this->labels,
-                'datasets' => $this->datasets,
-                'selectedDate' => $this->selectedDate,
-                'selectedChart' => $this->filterList[0],
+            $this->dispatch('update-daily-transactions-chart', [
+                'labels' => $this->chartLabels,
+                'datasets' => $this->chartDatasets,
+                'currentDate' => $this->currentDate,
+                'selectedChart' => $this->chartList[0],
             ]);
 
-            $this->reset();
+            $this->reset('file', 'isFileValidated');
         }
         catch (\Throwable $th)
         {
@@ -126,10 +151,10 @@ class Dashboard extends Component
         }
     }
 
-    private function setTransaksiHarianChart()
+    private function getDailyTransactions()
     {
         $thisMonthDailyTransactions = DailyTransaction::query()
-            ->whereMonth('created_at', now()->month)
+            ->whereMonth('created_at', $this->currentMonth)
             ->whereYear('created_at', now()->year)
             ->get()
             ->sortBy('created_at')
@@ -138,64 +163,80 @@ class Dashboard extends Component
                 return $transaction->created_at->format('d/m/Y');
             });
 
-        $totalDailyTransactions = [];
-        $totalDailyNominals = [];
-
         foreach ($thisMonthDailyTransactions as $transaction)
         {
-            $totalDailyTransactions[] = $transaction->count();
-            $totalDailyNominals[] = $transaction->sum('total');
+            $this->totalDailyTransactions[] = $transaction->count();
+            $this->totalDailyNominals[] = $transaction->sum('total');
         }
 
-        $this->labels = $thisMonthDailyTransactions->keys()->toArray();
-        $this->datasets = [
-            [
-                'type' => 'line',
-                'label' => 'Transaksi',
-                'backgroundColor' => '#00a25099',
-                'borderColor' => '#00a250',
-                'pointStyle' => 'rect',
-                'pointRadius' => 25,
-                'pointHoverRadius' => 20,
-                'borderWidth' => 2,
-                'yAxisID' => 'y1',
-                'data' => $totalDailyTransactions,
-            ],
+        // NEED TO MAKE SURE THAT THE INDEX IS NOT NULL BY USING NULL COALESCING OPERATOR (?->)
+        $getTodayTransaction = $thisMonthDailyTransactions->get($this->currentDate->format('d/m/Y'));
+
+        $this->totalToday['transactions'] = $getTodayTransaction?->count();
+        $this->totalToday['nominals'] = $getTodayTransaction?->sum('total');
+        $this->todayTopTransaction['product_name'] = $getTodayTransaction?->groupBy('product_id')->sortDesc()->first()->first()->product->description;
+        $this->todayTopTransaction['product_count'] = $getTodayTransaction?->groupBy('product_id')->sortDesc()->first()->count();
+        $this->todayTopTransaction['agent_branch'] = $getTodayTransaction?->groupBy('agent_id')->sortDesc()->first()->first()->agent->branch->name;
+        $this->todayTopTransaction['agent_count'] = $getTodayTransaction?->groupBy('agent_id')->sortDesc()->first()->count();
+        $this->todayTopTransaction['agent_nominals'] = $getTodayTransaction?->groupBy('agent_id')->sortDesc()->first()->sum('total');
+        $this->todayTopTransaction['agent_total'] = $getTodayTransaction?->groupBy('agent_id')->count();
+
+        // CHECK IF TODAY's CHART IS STONK OR NOT. copy() TO AVOID MUTATING THE ORIGINAL DATE
+        $this->isChartStonk = $getTodayTransaction?->count() > $thisMonthDailyTransactions->get($this->currentDate->copy()->subDay(1)->format('d/m/Y'))?->count();
+
+        // CHECK IF THERE IS A NEW AGENT REGISTERED TODAY
+        $this->isThereNewAgent = Agent::query()->whereDate('created_at', $this->currentDate)->exists();
+
+        $this->chartLabels = $thisMonthDailyTransactions->keys()->toArray();
+        $this->chartDatasets = [
             [
                 'type' => 'bar',
                 'label' => 'Nominal',
-                'backgroundColor' => '#fbb031b3',
-                'borderColor' => '#fbb031',
+                'backgroundColor' => '#00B050',
+                'borderColor' => '#00B050',
                 'borderWidth' => 2,
                 'yAxisID' => 'y',
-                'data' => $totalDailyNominals,
+                'order' => 2,
+                'data' => $this->totalDailyNominals,
+            ],
+            [
+                'type' => 'line',
+                'label' => 'Transaksi',
+                // 'backgroundColor' => '#00a25099',
+                'borderColor' => '#FF0000',
+                // 'pointStyle' => 'rect',
+                // 'pointRadius' => 0,
+                // 'pointHoverRadius' => 0,
+                'borderWidth' => 5,
+                'yAxisID' => 'y1',
+                'data' => $this->totalDailyTransactions,
             ],
         ];
     }
 
-    private function setTransaksiProdukTerbesarChart()
+    private function getTopTenProductTransactions()
     {
-        $todayProductTransactions = DailyTransaction::query()
-            ->with('product')
-            ->whereDay('created_at', $this->selectedDate)
-            ->whereMonth('created_at', now()->month)
+        $todayTopTenProductTransactions = DailyTransaction::query()
+            ->with(['product'])
+            ->whereDay('created_at', $this->currentDate)
+            ->whereMonth('created_at', $this->currentMonth)
             ->whereYear('created_at', now()->year)
             ->get()
             ->groupBy(function ($transaction)
             {
                 return $transaction->product->description;
-            });
+            })->sortDesc()->take(10)->sort();
 
-        $this->labels = collect($todayProductTransactions)->sortDesc()->take(10)->sort()->keys()->toArray();
-        $this->datasets = [
+        $this->chartLabels = collect($todayTopTenProductTransactions)->keys()->toArray();
+        $this->chartDatasets = [
             [
                 'label' => 'Transaksi',
-                'backgroundColor' => '#00a250b3',
-                'borderColor' => '#00a250',
+                'backgroundColor' => '#FF0000',
+                'borderColor' => '#FF0000',
                 'borderWidth' => 2,
                 'barThickness' => 30,
                 'yAxisID' => 'y',
-                'data' => collect($todayProductTransactions)->sortDesc()->take(10)->sort()->map(function ($item)
+                'data' => collect($todayTopTenProductTransactions)->map(function ($item)
                 {
                     return $item->count();
                 })->values()->all(),
@@ -203,37 +244,36 @@ class Dashboard extends Component
         ];
     }
 
-    private function setTransaksiAgenTerbesarChart()
+    private function getTopTenAgentTransactions()
     {
-        $todayAgentTransactions = DailyTransaction::query()
+        $todayTopTenAgentTransactions = DailyTransaction::query()
             ->with(['agent'])
-            ->whereDay('created_at', $this->selectedDate)
-            ->whereMonth('created_at', now()->month)
+            ->whereDay('created_at', $this->currentDate)
+            ->whereMonth('created_at', $this->currentMonth)
             ->whereYear('created_at', now()->year)
             ->get()
             ->groupBy(function ($transaction)
             {
                 return $transaction->agent->name;
-            });
+            })->sortDesc()->take(10);
 
-        foreach (collect($todayAgentTransactions)->sortDesc()->take(10) as $transaction)
+        foreach (collect($todayTopTenAgentTransactions) as $transaction)
         {
-            $this->mostFrequentAgentTransactions[] = [
+            $this->topTenAgentTransactions[] = [
                 'branch' => $transaction->first()->agent->branch,
                 'account' => $transaction->first()->agent->account,
                 'name' => $transaction->first()->agent->name,
                 'transaction' => $transaction->count(),
-                // FORMAT NOMINAL
-                'nominal' => number_format($transaction->sum('total'), 0, ',', '.'),
+                'nominal' => number_format($transaction->sum('total'), 0, ',', '.'), // FORMAT NOMINAL
             ];
         }
     }
 
-    private function setStatusTransaksiChart()
+    private function getTodayTransactionsStatus()
     {
-        $todayStatusTransactions = DailyTransaction::query()
-            ->whereDay('created_at', $this->selectedDate)
-            ->whereMonth('created_at', now()->month)
+        $todayTransactionStatus = DailyTransaction::query()
+            ->whereDay('created_at', $this->currentDate)
+            ->whereMonth('created_at', $this->currentMonth)
             ->whereYear('created_at', now()->year)
             ->get()
             ->groupBy(function ($transaction)
@@ -241,17 +281,17 @@ class Dashboard extends Component
                 return $transaction->status;
             });
 
-        $this->labels = collect($todayStatusTransactions)->keys()->toArray();
-        $this->datasets = [
+        $this->chartLabels = collect($todayTransactionStatus)->keys()->toArray();
+        $this->chartDatasets = [
             [
                 'label' => 'Total Transaksi',
-                'backgroundColor' => 
+                'backgroundColor' =>
                 [
-                    'rgba(50, 220, 50, 0.8)',
-                    'rgba(255, 0, 0, 1)',
-                    'rgba(18, 18, 18, 0.5)',
+                    'rgba(50, 220, 50, 0.8)', // SUCCESS
+                    'rgba(255, 0, 0, 1)', // FAILED
+                    'rgba(18, 18, 18, 0.5)', // SUSPECT
                 ],
-                'data' => collect($todayStatusTransactions)->map(function ($item)
+                'data' => collect($todayTransactionStatus)->map(function ($item)
                 {
                     return $item->count();
                 })->values()->all(),

@@ -20,7 +20,7 @@
             'bg-light-subtle shadow' => true,
         ]) style="width: 17%; left: .7rem; top: .7rem; bottom: .7rem">
             <a href="/" class="d-flex align-items-center justify-content-center">
-                <img src="{{ asset('/bank-sumut.png') }}" height="48" width="180" alt="Logo Bank Sumut" class="bg-transparent">
+                <img src="{{ asset('/bank-sumut.png') }}" height="48" width="156" alt="Logo Bank Sumut" class="bg-transparent">
             </a>
             <hr>
             <ul class="nav nav-pills flex-column gap-2 fw-bold">

@@ -44,7 +44,7 @@ class AgentManagement extends Component
     #[Validate('boolean', message: 'Status agen harus berupa boolean!')]
     public $agentStatus = true;
 
-    public $fileValidated = false;
+    public $isFileValidated = false;
     public $agentIDValidated = false;
     public $branchIDValidated = false;
     public $agentNameValidated = false;
@@ -59,11 +59,11 @@ class AgentManagement extends Component
         return view('livewire.agent-management', compact('branchList'))->layout('components.layouts.app', compact('title'));
     }
 
-    public function updated($propertyName)
+    public function updated($property)
     {
-        $this->validateOnly($propertyName);
+        $this->validateOnly($property);
 
-        $this->{$propertyName . 'Validated'} = true;
+        $this->{$property . 'Validated'} = true;
     }
 
     public function submitFile()
@@ -82,7 +82,7 @@ class AgentManagement extends Component
 
             $this->dispatch('pg:eventRefresh-AgentTable');
 
-            $this->reset();
+            $this->reset('file', 'isFileValidated');
         }
         catch (\Throwable $th)
         {

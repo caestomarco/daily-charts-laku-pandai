@@ -32,7 +32,7 @@ class BranchManagement extends Component
     #[Validate('boolean', message: 'Status kantor cabang harus berupa OPEN atau CLOSE!')]
     public $branchStatus = true;
 
-    public $fileValidated = false;
+    public $isFileValidated = false;
     public $branchIDValidated = false;
     public $branchNameValidated = false;
     public $branchStatusValidated = true;
@@ -44,11 +44,11 @@ class BranchManagement extends Component
         return view('livewire.branch-management')->layout('components.layouts.app', compact('title'));
     }
 
-    public function updated($propertyName)
+    public function updated($property)
     {
-        $this->validateOnly($propertyName);
+        $this->validateOnly($property);
 
-        $this->{$propertyName . 'Validated'} = true;
+        $this->{$property . 'Validated'} = true;
     }
 
     public function updatedBranchStatus()
@@ -73,7 +73,7 @@ class BranchManagement extends Component
 
             $this->dispatch('pg:eventRefresh-BranchTable');
 
-            $this->reset();
+            $this->reset('file', 'isFileValidated');
         }
         catch (\Throwable $th)
         {

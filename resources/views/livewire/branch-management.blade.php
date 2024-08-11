@@ -65,7 +65,7 @@
                         </div>
 
                         {{-- FILE --}}
-                        <input class="form-control @error('file') is-invalid @elseif($fileValidated) is-valid @enderror" id="branch-file" type="file" wire:model.live="file">
+                        <input class="form-control @error('file') is-invalid @elseif($isFileValidated) is-valid @enderror" id="branch-file" type="file" wire:model.live="file">
                         <div class="valid-feedback">
                             File valid!
                         </div>

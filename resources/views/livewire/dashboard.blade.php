@@ -29,7 +29,7 @@
 
     {{-- PAGE HEADER --}}
     <div class="d-flex justify-content-between mx-4 p-3 rounded-3 bg-light-subtle shadow">
-        <h3 class="mb-0 text-warning-emphasis fw-bold">Dashboard Laku Pandai</h3>
+        <h3 class="mb-0 text-warning-emphasis fw-bold">Dashboard LAKU PANDAI</h3>
         <div>
             <button type="button" class="btn btn-secondary fw-semibold" data-bs-toggle="modal" data-bs-target="#import-transaction-modal">
                 Import Data Transaksi
@@ -44,8 +44,8 @@
                 {{ $selectedChart }}
             </button>
             <ul class="dropdown-menu">
-                @foreach ($filterList as $filter)
-                    <li wire:click="setFilter('{{ $filter }}')"><a class="dropdown-item" href="#">{{ $filter }}</a></li>
+                @foreach ($chartList as $chart)
+                    <li wire:click="setChart('{{ $chart }}')"><a class="dropdown-item" href="#">{{ $chart }}</a></li>
                 @endforeach
             </ul>
         </div>
@@ -55,36 +55,60 @@
     <section @class([
         'mx-4 p-3 rounded-3',
         'justify-content-between bg-light-subtle shadow d-flex align-items-center' => true,
-        'd-none' => $selectedChart === 'Transaksi Agen Terbesar',
-    ])>
+    ]) :class="{ 'd-none': $wire.selectedChart === 'Transaksi Agen Terbesar' }">
         <div @class([
             'col-7' => $selectedChart === 'Status Transaksi',
             'w-100 flex-grow-1 flex-fill' => $selectedChart !== 'Status Transaksi',
-        ])>
-            <canvas id="chart" class="mb-4" style="min-height: 73.8vh; max-height: 73.8vh" wire:ignore.self></canvas>
-            {{-- <div class="alert alert-primary">
-                <h4>Informasi Dashboard</h4>
-                <ul>
-                    <li>Data yang digunakan adalah data transaksi LAKU PANDAI pada tanggal <strong>{{ now()->translatedFormat('l, d F Y') }}</strong> hingga pukul <strong>16.00 WIB</strong></li>
-                    <li>Tercatat <strong>{{ end($datasets[0]['data']) }} transaksi</strong> dengan total nominal <strong>{{number_format(end($datasets[1]['data']))}}</strong> </li>
-                </ul>
-            </div> --}}
+        ]) >
+            {{-- CHART CANVAS --}}
+            <canvas id="chart" class="mb-4 rounded-4" style="min-height: 74vh; max-height: 74vh" wire:ignore.self></canvas>
+
+            {{-- INFORMASI DASHBOARD --}}
+            @if ($selectedChart === 'Transaksi Harian')
+                <div class="alert alert-primary mb-0">
+                    <h3 class="fw-semibold">Informasi Dashboard</h3>
+                    <ul class="mb-0">
+                        <li>Data yang digunakan adalah data transaksi <strong>LAKU PANDAI</strong> pada tanggal <strong>{{ $currentDate->translatedFormat('l, d F Y') }}</strong> hingga pukul
+                            <strong>16.00
+                                WIB</strong>.
+                        </li>
+                        <li>Tercatat <strong>{{ number_format($totalToday['transactions'], '0', '.', ',') }} transaksi</strong> dengan total nominal
+                            <strong>{{ number_format($totalToday['nominals'], '0', '.', ',') }}</strong>.
+                        </li>
+                        <li>Fitur yang paling banyak ditransaksikan adalah <strong>{{ $todayTopTransaction['product_name'] }}</strong> sebanyak <strong>{{ $todayTopTransaction['product_count'] }}
+                                transaksi</strong>.</li>
+                        <li>Agen yang melakukan transaksi terbanyak adalah agen di bawah <strong>Unit Kantor {{ $todayTopTransaction['agent_branch'] }} </strong> sebanyak
+                            <strong>{{ $todayTopTransaction['agent_count'] }} transaksi</strong> dengan total nominal
+                            <strong>{{ number_format($todayTopTransaction['agent_nominals'], '0', '.', ',') }}</strong> dari total <strong>{{ $todayTopTransaction['agent_total'] }} agen</strong>
+                            yang melakukan transaksi.
+                        </li>
+                        <li>Tren transaksi <strong>{{ $isChartStonk ? 'NAIK' : 'TURUN' }}</strong> dibanding hari sebelumnya.</li>
+                        <li><strong>{{ $isThereNewAgent ? 'ADA' : 'TIDAK ADA' }}</strong> penambahan agen SUMUT LINK.</li>
+                    </ul>
+                </div>
+            @endif
+
+            @if ($selectedChart === 'Transaksi Produk Terbesar' && !$chartDatasets)
+                <div class="alert alert-warning mb-0" role="alert">
+                    Belum ada data transaksi pada tanggal {{ $currentDate }}.
+                </div>
+            @endif
         </div>
 
-        <div @class([
-            'col-4' => true,
-            'd-none' => $selectedChart !== 'Status Transaksi',
-        ])>
-            <table class="table my-auto">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Status</th>
-                        <th>Total Transaksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if ($selectedChart === 'Status Transaksi')
-                        @foreach (array_combine($labels, $datasets[0]['data']) as $key => $value)
+        {{-- TABEL STATUS TRANSAKSI --}}
+        @if ($selectedChart === 'Status Transaksi')
+            <div @class([
+                'col-4' => true,
+            ])>
+                <table class="table my-auto">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Status</th>
+                            <th>Total Transaksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (array_combine($chartLabels, $chartDatasets[0]['data']) as $key => $value)
                             <tr @class([
                                 'table-success' => $key === 'SUCCESS',
                                 'table-danger' => $key === 'FAILED',
@@ -94,42 +118,49 @@
                                 <td class="w-50">{{ $value }}</td>
                             </tr>
                         @endforeach
-                    @endif
-                </tbody>
-            </table>
-        </div>
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </section>
 
     {{-- TABLE TRANSAKSI AGEN TERBESAR --}}
-    <div @class([
-        'mx-4 p-3 rounded-3' => true,
-        'bg-light-subtle shadow' => true,
-        'd-none' => $selectedChart !== 'Transaksi Agen Terbesar',
-    ])>
-        <h2 class="fw-bold text-center">Tabel 10 Transaksi Agen Terbesar - {{ $selectedDate }}</h2>
-        <table class="table table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>Kantor Cabang</th>
-                    <th>Rekening Agen</th>
-                    <th>Nama Agen</th>
-                    <th>Total Transaksi</th>
-                    <th>Nominal</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($mostFrequentAgentTransactions as $transaction)
-                    <tr class="table-warning">
-                        <td>{{ $transaction['branch']->name }}</td>
-                        <td>{{ $transaction['account'] }}</td>
-                        <td>{{ $transaction['name'] }}</td>
-                        <td>{{ $transaction['transaction'] }}</td>
-                        <td>{{ $transaction['nominal'] }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+    @if ($selectedChart === 'Transaksi Agen Terbesar')
+        <div @class([
+            'mx-4 p-3 rounded-3' => true,
+            'bg-light-subtle shadow' => true,
+        ]) >
+            @if ($topTenAgentTransactions)
+                <h2 class="fw-bold text-center">Tabel 10 Transaksi Agen Terbesar - {{ $currentDate->translatedFormat('d/m/Y') }}</h2>
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Kantor Cabang</th>
+                            <th>Rekening Agen</th>
+                            <th>Nama Agen</th>
+                            <th>Total Transaksi</th>
+                            <th>Nominal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($topTenAgentTransactions as $transaction)
+                            <tr class="table-warning">
+                                <td>{{ $transaction['branch']->name }}</td>
+                                <td>{{ $transaction['account'] }}</td>
+                                <td>{{ $transaction['name'] }}</td>
+                                <td>{{ $transaction['transaction'] }}</td>
+                                <td>{{ $transaction['nominal'] }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <div class="alert alert-warning mb-0" role="alert">
+                    Belum ada data transaksi pada tanggal {{ $currentDate }}.
+                </div>
+            @endif
+        </div>
+    @endif
 
     {{-- IMPORT TRANSACTION MODAL --}}
     <div class="modal fade" id="import-transaction-modal" tabindex="-1" aria-labelledby="import-transaction-label" aria-hidden="true" wire:ignore.self>
@@ -147,7 +178,7 @@
                         </div>
 
                         {{-- FILE --}}
-                        <input class="form-control @error('file') is-invalid @elseif($fileValidated) is-valid @enderror" id="validationCustom01" type="file" wire:model.live="file">
+                        <input class="form-control @error('file') is-invalid @elseif($isFileValidated) is-valid @enderror" id="validationCustom01" type="file" wire:model.live="file">
                         <div class="valid-feedback">
                             File valid!
                         </div>
@@ -176,7 +207,7 @@
     <script>
         (() => {
             // HIDE IMPORT TRANSACTION MODAL & SUCCESS ALERT ON SUCCESSFUL SUBMISSION
-            window.addEventListener('hide-import-transaction-modal', (event) => {
+            window.addEventListener('hide-import-daily-transaction-modal', (event) => {
                 window.bootstrap.Modal.getInstance(document.getElementById('import-transaction-modal')).hide();
 
                 setTimeout(function() {
@@ -202,55 +233,67 @@
             Chart.defaults.font.size = 14;
             Chart.defaults.font.weight = 'lighter';
             Chart.defaults.color = '#010101';
+            ChartDataLabels.defaults.font.size = 20;
+
+            const customBackgroundPlugin = {
+                id: 'customCanvasBackgroundColor',
+                beforeDraw: (chart) => {
+                    const context = chart.canvas.getContext('2d');
+                    context.save();
+                    context.globalCompositeOperation = 'destination-over';
+                    context.fillStyle = '#4C4C4C';
+                    context.fillRect(0, 0, chart.width, chart.height);
+                    context.restore();
+                }
+            };
 
             if (selected_chart === 'Transaksi Harian') {
                 Chart.getChart('chart') ? Chart.getChart('chart').destroy() : null;
+
                 chart = new Chart(document.getElementById('chart'), {
-                    plugins: [ChartDataLabels],
+                    plugins: [ChartDataLabels, customBackgroundPlugin],
                     data: {
                         labels: labels,
                         datasets: datasets
                     },
                     options: {
                         responsive: true,
-                        plugins: {
-                            datalabels: {
-                                color: '#010101',
-                                labels: {
-                                    title: {
-                                        font: {
-                                            weight: 'lighter'
-                                        }
-                                    },
-                                    value: {
-                                        color: '#010101'
-                                    }
-                                },
-                                display: function(context) {
-                                    return context.dataset.type === 'line';
-                                },
-                                formatter: function(value, context) {
-                                    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                                }
-                            },
-                            legend: {
-                                position: 'bottom'
-                            },
-                            title: {
-                                display: true,
-                                text: 'Grafik Transaksi Harian Bulan ' + new Date().toLocaleString('id', {
-                                    month: 'long'
-                                }) + ' ' + new Date().getFullYear(),
-                                font: {
-                                    size: 32,
-                                }
+                        layout: {
+                            padding: {
+                                top: 20,
+                                right: 20,
+                                bottom: 20,
+                                left: 20
                             }
                         },
                         scales: {
+                            x: {
+                                border: {
+                                    display: false,
+                                    width: 23
+                                },
+                                grid: {
+                                    display: false,
+                                    drawOnChartArea: false,
+                                    drawTicks: false,
+                                },
+                                ticks: {
+                                    color: '#FFFFFF'
+                                }
+                            },
                             y: {
                                 type: 'linear',
                                 display: true,
                                 position: 'left',
+                                grid: {
+                                    // ONLY SHOW ONE GRID LINE AT ONE TIME
+                                    drawOnChartArea: true,
+                                    lineWidth: 1,
+                                    color: '#FFFFFF4D',
+                                },
+                                ticks: {
+                                    color: '#FFFFFF'
+                                }
                             },
                             y1: {
                                 type: 'linear',
@@ -260,12 +303,58 @@
                                     // ONLY SHOW ONE GRID LINE AT ONE TIME
                                     drawOnChartArea: false
                                 },
+                                ticks: {
+                                    color: '#FFFFFF'
+                                }
                             },
+                        },
+                        plugins: {
+                            datalabels: {
+                                anchor: 'end',
+                                clamp: true,
+                                align: 'top',
+                                color: '#FFFFFF',
+                                labels: {
+                                    title: {
+                                        font: {
+                                            size: 20,
+                                            weight: 'lighter',
+                                        }
+                                    },
+                                    value: {
+                                        color: '#FFFFFF'
+                                    }
+                                },
+                                // ONLY SHOW LABELS ON LINE CHART
+                                display: function(context) {
+                                    return context.dataset.type === 'line';
+                                },
+                                // CONVERT NOMINAL TO CURRENCY FORMAT
+                                formatter: function(value, context) {
+                                    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                                }
+                            },
+                            legend: {
+                                labels: {
+                                    color: '#FFFFFF',
+                                },
+                                position: 'bottom',
+                            },
+                            title: {
+                                color: '#FFFFFF',
+                                display: true,
+                                text: 'Grafik Transaksi Harian Bulan ' + @json($currentDate->translatedFormat('F Y')),
+                                font: {
+                                    size: 32,
+                                    weight: 'bold',
+                                }
+                            }
                         },
                     }
                 });
             } else if (selected_chart === 'Transaksi Produk Terbesar') {
                 Chart.getChart('chart').destroy();
+
                 chart = new Chart(document.getElementById('chart'), {
                     type: 'bar',
                     plugins: [ChartDataLabels],
@@ -278,17 +367,19 @@
                         responsive: true,
                         plugins: {
                             datalabels: {
+                                anchor: 'end',
+                                clamp: false,
+                                align: 'right',
                                 color: '#010101',
                                 labels: {
                                     title: {
                                         font: {
-                                            weight: 'lighter'
+                                            size: 20,
+                                            weight: 'lighter',
                                         }
                                     },
-                                    value: {
-                                        color: '#010101'
-                                    }
                                 },
+                                // CONVERT NOMINAL TO CURRENCY FORMAT
                                 formatter: function(value, context) {
                                     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
                                 }
@@ -298,17 +389,38 @@
                             },
                             title: {
                                 display: true,
-                                text: 'Grafik 10 Transaksi Produk Terbesar - ' + @json($selectedDate),
+                                text: 'Grafik 10 Transaksi Produk Terbesar - ' + @json($currentDate->format('d/m/Y')),
                                 font: {
                                     size: 32,
-                                    weight: 'bolder'
+                                    weight: 'bold'
                                 }
                             }
+                        },
+                        scales: {
+                            // x: {
+                            //     type: 'linear',
+                            //     display: true,
+                            //     grid: {
+                            //         // ONLY SHOW ONE GRID LINE AT ONE TIME
+                            //         drawOnChartArea: false,
+                            //         lineWidth: 1,
+                            //     },
+                            // },
+                            // y: {
+                            //     type: 'linear',
+                            //     display: true,
+                            //     grid: {
+                            //         // ONLY SHOW ONE GRID LINE AT ONE TIME
+                            //         drawOnChartArea: false,
+                            //         lineWidth: 1,
+                            //     },
+                            // },
                         },
                     }
                 });
             } else if (selected_chart === 'Status Transaksi') {
                 Chart.getChart('chart').destroy();
+
                 chart = new Chart(document.getElementById('chart'), {
                     type: 'pie',
                     plugins: [ChartDataLabels],
@@ -317,21 +429,15 @@
                         datasets: datasets
                     },
                     options: {
+                        radius: '90%',
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             datalabels: {
+                                anchor: 'end',
+                                clamp: true,
+                                align: 'top',
                                 color: '#010101',
-                                labels: {
-                                    title: {
-                                        font: {
-                                            weight: 'lighter'
-                                        }
-                                    },
-                                    value: {
-                                        color: '#010101'
-                                    }
-                                },
                                 formatter: (value, context) => {
                                     const datapoints = context.chart.data.datasets[0].data
                                     const total = datapoints.reduce((total, datapoint) => total + datapoint, 0)
@@ -344,7 +450,7 @@
                             },
                             title: {
                                 display: true,
-                                text: 'Grafik Status Transaksi - ' + @json($selectedDate),
+                                text: 'Grafik Status Transaksi - ' + @json($currentDate->format('d/m/Y')),
                                 font: {
                                     size: 32,
                                     weight: 'bolder'
@@ -363,17 +469,17 @@
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            initializeCharts(@json($selectedChart), @json($labels), @json($datasets));
+            initializeCharts(@json($selectedChart), @json($chartLabels), @json($chartDatasets));
 
-            Livewire.on('update-transaksi-harian-chart', data => {
+            Livewire.on('update-daily-transactions-chart', data => {
                 updateChart(data);
             });
 
-            Livewire.on('update-transaksi-produk-terbesar-chart', data => {
+            Livewire.on('update-top-ten-product-transactions-chart', data => {
                 updateChart(data);
             });
 
-            Livewire.on('update-status-transaksi-chart', data => {
+            Livewire.on('update-today-transactions-status-chart', data => {
                 updateChart(data);
             });
         });
