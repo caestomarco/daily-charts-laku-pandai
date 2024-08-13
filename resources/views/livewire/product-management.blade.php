@@ -58,7 +58,7 @@
                         {{-- GUIDANCE --}}
                         <div class="alert alert-warning" role="alert">
                             Anda dapat menambahkan data produk secara <span class="fst-italic">otomatis</span> dengan meng-upload file .xlsx seperti contoh <a href="#"
-                                class="alert-link">berikut</a>.
+                                class="alert-link" @click="$wire.downloadFile">berikut</a>.
                         </div>
 
                         {{-- FILE --}}

@@ -1,5 +1,5 @@
 <div class="container-fluid d-flex flex-column gap-2 me-0" class=" " style="width: 83%">
-    
+
     {{-- BREADCRUMBS --}}
     <nav aria-label="breadcrumb">
         <ol @class(['breadcrumb ', 'mx-4 mt-4' => true]) class="">
@@ -41,10 +41,7 @@
     </div>
 
     {{-- POWERGRID TABLE --}}
-    <div @class([
-        'mx-4 p-3 rounded-3',
-        'bg-light-subtle shadow-lg' => true,
-    ])>
+    <div @class(['mx-4 p-3 rounded-3', 'bg-light-subtle shadow-lg' => true])>
         @livewire('branch-table')
     </div>
 
@@ -61,7 +58,7 @@
                         {{-- GUIDANCE --}}
                         <div class="alert alert-warning" role="alert">
                             Anda dapat menambahkan data kantor cabang secara <span class="fst-italic">otomatis</span> dengan meng-upload file .xlsx seperti contoh <a href="#"
-                                class="alert-link">berikut</a>.
+                                class="alert-link" @click="$wire.downloadFile">berikut</a>.
                         </div>
 
                         {{-- FILE --}}

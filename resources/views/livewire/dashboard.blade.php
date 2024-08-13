@@ -57,11 +57,24 @@
         'justify-content-between bg-light-subtle shadow d-flex align-items-center' => true,
     ]) :class="{ 'd-none': $wire.selectedChart === 'Transaksi Agen Terbesar' }">
         <div @class([
-            'col-7' => $selectedChart === 'Status Transaksi',
+            'col-7' =>
+                $selectedChart === 'Status Transaksi' &&
+                count($chartDatasets[0]['data']) > 0,
+            'col-12' =>
+                $selectedChart === 'Status Transaksi' &&
+                count($chartDatasets[0]['data']) === 0,
             'w-100 flex-grow-1 flex-fill' => $selectedChart !== 'Status Transaksi',
-        ]) >
+        ])>
             {{-- CHART CANVAS --}}
-            <canvas id="chart" class="mb-4 rounded-4" style="min-height: 74vh; max-height: 74vh" wire:ignore.self></canvas>
+            <canvas id="chart" class="mb-4 rounded-4" @click="console.log($wire.chartDatasets[0].data.length)" :class="{ 'd-none': $wire.chartDatasets[0].data.length === 0 }"
+                style="min-height: 74vh; max-height: 74vh" wire:ignore.self></canvas>
+
+            {{-- ALERT DATA TRANSAKSI KOSONG --}}
+            @if (count($chartDatasets[0]['data']) === 0)
+                <div class="alert alert-warning mb-0" :class="{ 'mb-4': $wire.selectedChart === 'Transaksi Harian' }" role="alert">
+                    Belum ada data transaksi pada tanggal {{ $currentDate }}.
+                </div>
+            @endif
 
             {{-- INFORMASI DASHBOARD --}}
             @if ($selectedChart === 'Transaksi Harian')
@@ -75,28 +88,25 @@
                         <li>Tercatat <strong>{{ number_format($totalToday['transactions'], '0', '.', ',') }} transaksi</strong> dengan total nominal
                             <strong>{{ number_format($totalToday['nominals'], '0', '.', ',') }}</strong>.
                         </li>
-                        <li>Fitur yang paling banyak ditransaksikan adalah <strong>{{ $todayTopTransaction['product_name'] }}</strong> sebanyak <strong>{{ $todayTopTransaction['product_count'] }}
-                                transaksi</strong>.</li>
+                        <li>Fitur yang paling banyak ditransaksikan adalah <strong>{{ $todayTopTransaction['product_name'] }}</strong> sebanyak
+                            <strong>{{ number_format($todayTopTransaction['product_count'], '0', '.', ',') }}
+                                transaksi</strong>.
+                        </li>
                         <li>Agen yang melakukan transaksi terbanyak adalah agen di bawah <strong>Unit Kantor {{ $todayTopTransaction['agent_branch'] }} </strong> sebanyak
-                            <strong>{{ $todayTopTransaction['agent_count'] }} transaksi</strong> dengan total nominal
-                            <strong>{{ number_format($todayTopTransaction['agent_nominals'], '0', '.', ',') }}</strong> dari total <strong>{{ $todayTopTransaction['agent_total'] }} agen</strong>
+                            <strong>{{ number_format($todayTopTransaction['agent_count'], '0', '.', ',') }} transaksi</strong> dengan total nominal
+                            <strong>{{ number_format($todayTopTransaction['agent_nominals'], '0', '.', ',') }}</strong> dari total
+                            <strong>{{ number_format($todayTopTransaction['agent_total'], '0', '.', ',') }} agen</strong>
                             yang melakukan transaksi.
                         </li>
                         <li>Tren transaksi <strong>{{ $isChartStonk ? 'NAIK' : 'TURUN' }}</strong> dibanding hari sebelumnya.</li>
-                        <li><strong>{{ $isThereNewAgent ? 'ADA' : 'TIDAK ADA' }}</strong> penambahan agen SUMUT LINK.</li>
+                        <li><strong :class="{'text-danger': !$wire.isThereNewAgent}" >{{ $isThereNewAgent ? 'ADA' : 'TIDAK ADA' }}</strong> penambahan agen SUMUT LINK.</li>
                     </ul>
-                </div>
-            @endif
-
-            @if ($selectedChart === 'Transaksi Produk Terbesar' && !$chartDatasets)
-                <div class="alert alert-warning mb-0" role="alert">
-                    Belum ada data transaksi pada tanggal {{ $currentDate }}.
                 </div>
             @endif
         </div>
 
         {{-- TABEL STATUS TRANSAKSI --}}
-        @if ($selectedChart === 'Status Transaksi')
+        @if ($selectedChart === 'Status Transaksi' && count($chartDatasets[0]['data']) > 0)
             <div @class([
                 'col-4' => true,
             ])>
@@ -110,8 +120,8 @@
                     <tbody>
                         @foreach (array_combine($chartLabels, $chartDatasets[0]['data']) as $key => $value)
                             <tr @class([
-                                'table-success' => $key === 'SUCCESS',
-                                'table-danger' => $key === 'FAILED',
+                                'table-warning' => $key === 'SUCCESS',
+                                'table-primary' => $key === 'FAILED',
                                 'table-secondary' => $key === 'SUSPECT',
                             ])>
                                 <td class="w-50">{{ $key }}</td>
@@ -129,9 +139,9 @@
         <div @class([
             'mx-4 p-3 rounded-3' => true,
             'bg-light-subtle shadow' => true,
-        ]) >
+        ])>
             @if ($topTenAgentTransactions)
-                <h2 class="fw-bold text-center">Tabel 10 Transaksi Agen Terbesar - {{ $currentDate->translatedFormat('d/m/Y') }}</h2>
+                <h2 class="fw-bold text-center">10 Transaksi Agen Terbesar</h2>
                 <table class="table table-striped">
                     <thead class="table-dark">
                         <tr>
@@ -144,8 +154,8 @@
                     </thead>
                     <tbody>
                         @foreach ($topTenAgentTransactions as $transaction)
-                            <tr class="table-warning">
-                                <td>{{ $transaction['branch']->name }}</td>
+                            <tr>
+                                <td class="table-primary">{{ $transaction['branch']->name }}</td>
                                 <td>{{ $transaction['account'] }}</td>
                                 <td>{{ $transaction['name'] }}</td>
                                 <td>{{ $transaction['transaction'] }}</td>
@@ -174,7 +184,7 @@
                     <div class="modal-body">
                         {{-- GUIDANCE --}}
                         <div class="alert alert-warning" role="alert">
-                            Silakan upload data transaksi harian dengan meng-upload file .xlsx seperti contoh <a href="#" class="alert-link">berikut</a>.
+                            Silakan upload data transaksi harian dengan meng-upload file .xlsx seperti contoh <a href="#" class="alert-link" @click="$wire.downloadFile">berikut</a>.
                         </div>
 
                         {{-- FILE --}}
@@ -230,10 +240,10 @@
         let chart;
 
         function initializeCharts(selected_chart, labels, datasets) {
-            Chart.defaults.font.size = 14;
             Chart.defaults.font.weight = 'lighter';
             Chart.defaults.color = '#010101';
-            ChartDataLabels.defaults.font.size = 20;
+            // Chart.defaults.font.size = 18;
+            // ChartDataLabels.defaults.font.size = 12;
 
             const customBackgroundPlugin = {
                 id: 'customCanvasBackgroundColor',
@@ -241,7 +251,7 @@
                     const context = chart.canvas.getContext('2d');
                     context.save();
                     context.globalCompositeOperation = 'destination-over';
-                    context.fillStyle = '#4C4C4C';
+                    context.fillStyle = '#FEFEFE';
                     context.fillRect(0, 0, chart.width, chart.height);
                     context.restore();
                 }
@@ -266,66 +276,29 @@
                                 left: 20
                             }
                         },
-                        scales: {
-                            x: {
-                                border: {
-                                    display: false,
-                                    width: 23
-                                },
-                                grid: {
-                                    display: false,
-                                    drawOnChartArea: false,
-                                    drawTicks: false,
-                                },
-                                ticks: {
-                                    color: '#FFFFFF'
-                                }
-                            },
-                            y: {
-                                type: 'linear',
-                                display: true,
-                                position: 'left',
-                                grid: {
-                                    // ONLY SHOW ONE GRID LINE AT ONE TIME
-                                    drawOnChartArea: true,
-                                    lineWidth: 1,
-                                    color: '#FFFFFF4D',
-                                },
-                                ticks: {
-                                    color: '#FFFFFF'
-                                }
-                            },
-                            y1: {
-                                type: 'linear',
-                                display: true,
-                                position: 'right',
-                                grid: {
-                                    // ONLY SHOW ONE GRID LINE AT ONE TIME
-                                    drawOnChartArea: false
-                                },
-                                ticks: {
-                                    color: '#FFFFFF'
-                                }
-                            },
-                        },
                         plugins: {
                             datalabels: {
-                                anchor: 'end',
-                                clamp: true,
-                                align: 'top',
-                                color: '#FFFFFF',
+                                // anchor: 'end',
+                                // align: 'top',
+                                // clamp: true,
+                                color: '#010101',
+                                borderWidth: 50,
+                                font: {
+                                    size: 14,
+                                    weight: 'bold',
+                                },
                                 labels: {
+                                    value: {
+                                        color: '#010101'
+                                    },
                                     title: {
                                         font: {
-                                            size: 20,
-                                            weight: 'lighter',
+                                            size: 14,
+                                            weight: 'bold',
                                         }
                                     },
-                                    value: {
-                                        color: '#FFFFFF'
-                                    }
                                 },
-                                // ONLY SHOW LABELS ON LINE CHART
+                                // ONLY SHOW DATALABELS ON LINE CHART
                                 display: function(context) {
                                     return context.dataset.type === 'line';
                                 },
@@ -335,20 +308,79 @@
                                 }
                             },
                             legend: {
-                                labels: {
-                                    color: '#FFFFFF',
-                                },
                                 position: 'bottom',
+                                labels: {
+                                    color: '#010101',
+                                    font: {
+                                        size: 16,
+                                        weight: 'bold',
+                                    }
+                                },
                             },
                             title: {
-                                color: '#FFFFFF',
+                                color: '#010101',
                                 display: true,
-                                text: 'Grafik Transaksi Harian Bulan ' + @json($currentDate->translatedFormat('F Y')),
+                                text: 'Transaksi Harian',
                                 font: {
                                     size: 32,
                                     weight: 'bold',
                                 }
                             }
+                        },
+                        scales: {
+                            x: {
+                                border: {
+                                    display: false,
+                                    width: 0
+                                },
+                                grid: {
+                                    display: false,
+                                    drawOnChartArea: false,
+                                    drawTicks: false,
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                    }
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                grid: {
+                                    display: true,
+                                    drawTicks: false,
+                                    drawOnChartArea: true,
+                                    lineWidth: 1,
+                                    color: '#EBEBEB',
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                    }
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                grid: {
+                                    display: true,
+                                    drawTicks: false,
+                                    drawOnChartArea: false,
+                                    lineWidth: 1,
+                                    color: '#EBEBEB',
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                    }
+                                }
+                            },
                         },
                     }
                 });
@@ -365,17 +397,29 @@
                     options: {
                         indexAxis: 'y',
                         responsive: true,
+                        layout: {
+                            padding: {
+                                top: 20,
+                                right: 20,
+                                bottom: 20,
+                                left: 20
+                            }
+                        },
                         plugins: {
                             datalabels: {
                                 anchor: 'end',
-                                clamp: false,
                                 align: 'right',
+                                clamp: false,
                                 color: '#010101',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold',
+                                },
                                 labels: {
                                     title: {
                                         font: {
-                                            size: 20,
-                                            weight: 'lighter',
+                                            size: 14,
+                                            weight: 'bold',
                                         }
                                     },
                                 },
@@ -385,11 +429,19 @@
                                 }
                             },
                             legend: {
-                                position: 'right'
+                                position: 'right',
+                                labels: {
+                                    color: '#010101',
+                                    font: {
+                                        size: 16,
+                                        weight: 'bold',
+                                    }
+                                },
                             },
                             title: {
+                                color: '#010101',
                                 display: true,
-                                text: 'Grafik 10 Transaksi Produk Terbesar - ' + @json($currentDate->format('d/m/Y')),
+                                text: '10 Transaksi Terbesar Laku Pandai' ,
                                 font: {
                                     size: 32,
                                     weight: 'bold'
@@ -397,24 +449,36 @@
                             }
                         },
                         scales: {
-                            // x: {
-                            //     type: 'linear',
-                            //     display: true,
-                            //     grid: {
-                            //         // ONLY SHOW ONE GRID LINE AT ONE TIME
-                            //         drawOnChartArea: false,
-                            //         lineWidth: 1,
-                            //     },
-                            // },
-                            // y: {
-                            //     type: 'linear',
-                            //     display: true,
-                            //     grid: {
-                            //         // ONLY SHOW ONE GRID LINE AT ONE TIME
-                            //         drawOnChartArea: false,
-                            //         lineWidth: 1,
-                            //     },
-                            // },
+                            x: {
+                                type: 'linear',
+                                display: true,
+                                grid: {
+                                    // ONLY SHOW ONE GRID LINE AT ONE TIME
+                                    drawOnChartArea: false,
+                                    lineWidth: 1,
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                    }
+                                }
+                            },
+                            y: {
+                                // type: 'linear',
+                                display: true,
+                                grid: {
+                                    // ONLY SHOW ONE GRID LINE AT ONE TIME
+                                    drawOnChartArea: false,
+                                    lineWidth: 1,
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                    }
+                                }
+                            },
                         },
                     }
                 });
@@ -429,28 +493,53 @@
                         datasets: datasets
                     },
                     options: {
-                        radius: '90%',
+                        radius: '80%',
                         responsive: true,
                         maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 20,
+                                right: 20,
+                                bottom: 20,
+                                left: 20
+                            }
+                        },
                         plugins: {
                             datalabels: {
+                                align: 'top',
                                 anchor: 'end',
                                 clamp: true,
-                                align: 'top',
                                 color: '#010101',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold',
+                                },
                                 formatter: (value, context) => {
                                     const datapoints = context.chart.data.datasets[0].data
                                     const total = datapoints.reduce((total, datapoint) => total + datapoint, 0)
                                     const percentage = value / total * 100
                                     return percentage.toFixed(2) + "%";
                                 },
+                                rotation: (context) => {
+                                    const index = context.dataIndex;
+                                    const value = context.dataset.data[index];
+                                    return value < 10 ? 45 : 0;
+                                },
                             },
                             legend: {
-                                position: 'bottom'
+                                position: 'bottom',
+                                labels: {
+                                    color: '#010101',
+                                    font: {
+                                        size: 16,
+                                        weight: 'bold',
+                                    }
+                                },
                             },
                             title: {
+                                color: '#010101',
                                 display: true,
-                                text: 'Grafik Status Transaksi - ' + @json($currentDate->format('d/m/Y')),
+                                text: 'Status Transaksi',
                                 font: {
                                     size: 32,
                                     weight: 'bolder'

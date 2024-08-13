@@ -21,7 +21,7 @@ return new class extends Migration
             $table->double('nominal');
             $table->double('admin_fee');
             $table->double('total');
-            $table->enum('status', ['FAILED', 'SUCCESS', 'SUSPECT']);
+            $table->enum('status', ['FAILED', 'SUCCESS', 'SUSPECT', 'PENDING']);
             $table->timestamps();
         });
     }

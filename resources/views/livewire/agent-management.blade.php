@@ -57,8 +57,8 @@
                     <div class="modal-body">
                         {{-- GUIDANCE --}}
                         <div class="alert alert-warning" role="alert">
-                            Anda dapat menambahkan data agen secara <span class="fst-italic">otomatis</span> dengan meng-upload file .xlsx seperti contoh <a href="#"
-                                class="alert-link">berikut</a>.
+                            Anda dapat menambahkan data agen secara <span class="fst-italic">otomatis</span> dengan meng-upload file .xlsx seperti contoh <a href="#" class="alert-link"
+                                @click="$wire.downloadFile">berikut</a>.
                         </div>
 
                         {{-- FILE --}}
@@ -87,14 +87,14 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="add-agent-label">Tambah Agen Baru</h1>
+                    <h1 class="modal-title fs-5" id="add-agent-label">{{ $mode === 'EDIT' ? 'Edit Data Agen' : 'Tambah Agen Baru' }}</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form wire:submit.prevent="addNewAgent" class="needs-validation justify-content-end" enctype="multipart/form-data" novalidate>
+                <form wire:submit.prevent="{{ $mode === 'EDIT' ? 'editExistingAgent' : 'addNewAgent' }}" class="needs-validation justify-content-end" enctype="multipart/form-data" novalidate>
                     {{-- FORM CONTENT --}}
                     <div class="modal-body">
                         {{-- GUIDANCE --}}
-                        <div class="alert alert-warning" role="alert">
+                        <div class="alert alert-warning" role="alert" :class="{ 'd-none': $wire.mode === 'EDIT' }">
                             Anda dapat menambahkan data agen secara <span class="fst-italic">manual</span> dengan <br> mengisi form berikut.
                         </div>
 
@@ -184,6 +184,12 @@
 @push('additional-script')
     <script>
         (() => {
+            // OPEN EDIT MODAL
+            window.addEventListener('open-edit-agent-modal', (event) => {
+                console.log(event.detail)
+                new window.bootstrap.Modal(document.getElementById('add-agent-modal')).show();
+            });
+
             // HIDE ADD AGENT MODAL & SUCCESS ALERT ON SUCCESSFUL SUBMISSION
             window.addEventListener('hide-add-agent-modal', (event) => {
                 window.bootstrap.Modal.getInstance(document.getElementById('add-agent-modal')).hide();
@@ -211,3 +217,12 @@
         })();
     </script>
 @endpush
+
+@script
+    <script>
+        // RESET MODAL ON CLOSE
+        window.addEventListener('hide.bs.modal', (event) => {
+            $wire.resetComponent();
+        });
+    </script>
+@endscript

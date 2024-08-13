@@ -139,12 +139,6 @@ final class AgentTable extends PowerGridComponent
         ]);
     }
 
-    #[\Livewire\Attributes\On('edit')]
-    public function edit($rowId): void
-    {
-        $this->js('alert(' . $rowId . ')');
-    }
-
     #[\Livewire\Attributes\On('bulkDelete.{tableName}')]
     public function bulkDelete(): void
     {
@@ -169,7 +163,7 @@ final class AgentTable extends PowerGridComponent
                 ->slot('Edit')
                 ->id()
                 ->class('btn btn-outline-primary')
-                ->dispatch('edit', ['rowId' => $row->id])
+                ->dispatch('open-edit-agent-modal', ['agentID' => $row->id, 'branchID' => $row->branch_id, 'agentName' => $row->name, 'agentStatus' => $row->status, 'agentAccount' => $row->account]),
         ];
     }
 }

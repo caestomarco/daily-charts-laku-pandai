@@ -44,6 +44,7 @@ class ProductManagement extends Component
         $this->validateOnly($property);
 
         $this->{$property . 'Validated'} = true;
+        $this->isFileValidated = true;
     }
 
     public function submitFile()
@@ -72,6 +73,15 @@ class ProductManagement extends Component
 
             throw $th;
         }
+    }
+
+    public function downloadFile()
+    {
+        // IF ON PRODUCTION, USE THIS
+        // return response()->download(storage_path('app/files/DaftarProduk.xlsx'));
+
+        // IF ON LOCAL, USE THIS
+        return response()->download(public_path('data/DaftarProduk.xlsx'));
     }
 
     public function addNewProduct()

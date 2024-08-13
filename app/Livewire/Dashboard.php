@@ -51,9 +51,7 @@ class Dashboard extends Component
     {
         $this->selectedChart = $this->chartList[0];
         $this->currentMonth = now()->format('m');
-        $this->currentDate = now()->month(intval($this->currentMonth))->subDay(4);
-
-        // dd($this->currentDate->translatedFormat('l, d F Y'));
+        $this->currentDate = now()->month(intval($this->currentMonth));
 
         $this->getDailyTransactions();
     }
@@ -70,6 +68,7 @@ class Dashboard extends Component
         $this->validateOnly($property);
 
         $this->{$property . 'Validated'} = true;
+        $this->isFileValidated = true;
     }
 
     public function setChart($value)
@@ -128,6 +127,8 @@ class Dashboard extends Component
 
             $this->getDailyTransactions();
 
+            dd($this->chartLabels, $this->chartDatasets);
+
             session()->flash('success', 'Berhasil mengimpor data transaksi!');
 
             $this->dispatch('hide-import-daily-transaction-modal');
@@ -149,6 +150,15 @@ class Dashboard extends Component
 
             throw $th;
         }
+    }
+
+    public function downloadFile()
+    {
+        // IF ON PRODUCTION, USE THIS
+        // return response()->download(storage_path('app/files/2024-08-02-TransaksiHarian.xls'));
+
+        // IF ON LOCAL, USE THIS
+        return response()->download(public_path('data/2024-08-02-TransaksiHarian.xls'));
     }
 
     private function getDailyTransactions()
@@ -192,9 +202,10 @@ class Dashboard extends Component
             [
                 'type' => 'bar',
                 'label' => 'Nominal',
-                'backgroundColor' => '#00B050',
-                'borderColor' => '#00B050',
+                'backgroundColor' => '#0703fc',
+                'borderColor' => '#0703fc',
                 'borderWidth' => 2,
+                // 'barThickness' => 30,
                 'yAxisID' => 'y',
                 'order' => 2,
                 'data' => $this->totalDailyNominals,
@@ -202,12 +213,12 @@ class Dashboard extends Component
             [
                 'type' => 'line',
                 'label' => 'Transaksi',
-                // 'backgroundColor' => '#00a25099',
-                'borderColor' => '#FF0000',
-                // 'pointStyle' => 'rect',
-                // 'pointRadius' => 0,
-                // 'pointHoverRadius' => 0,
-                'borderWidth' => 5,
+                'backgroundColor' => '#03fc3d',
+                'borderColor' => '#fc9003',
+                'pointStyle' => 'rect',
+                'pointRadius' => 25,
+                'pointHoverRadius' => 20,
+                'borderWidth' => 3,
                 'yAxisID' => 'y1',
                 'data' => $this->totalDailyTransactions,
             ],
@@ -234,7 +245,7 @@ class Dashboard extends Component
                 'backgroundColor' => '#FF0000',
                 'borderColor' => '#FF0000',
                 'borderWidth' => 2,
-                'barThickness' => 30,
+                // 'barThickness' => 30,
                 'yAxisID' => 'y',
                 'data' => collect($todayTopTenProductTransactions)->map(function ($item)
                 {
@@ -287,8 +298,8 @@ class Dashboard extends Component
                 'label' => 'Total Transaksi',
                 'backgroundColor' =>
                 [
-                    'rgba(50, 220, 50, 0.8)', // SUCCESS
-                    'rgba(255, 0, 0, 1)', // FAILED
+                    '#FBB031', // SUCCESS
+                    '#4471C4', // FAILED
                     'rgba(18, 18, 18, 0.5)', // SUSPECT
                 ],
                 'data' => collect($todayTransactionStatus)->map(function ($item)

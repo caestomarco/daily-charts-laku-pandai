@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreign('branch_id')->references('id')->on('branches')->onDelete('restrict')->onUpdate('cascade');
             $table->string('name');
             $table->char('account', 64)->nullable();
-            $table->enum('status', ['ACTIVE', 'CLOSE'])->default('ACTIVE');
+            $table->enum('status', ['ACTIVE', 'CLOSE', 'LOCK'])->default('ACTIVE');
             $table->timestamps();
         });
     }
