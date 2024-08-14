@@ -58,7 +58,7 @@ final class AgentTable extends PowerGridComponent
     public function relationSearch(): array
     {
         return [
-            'branch' => [ 
+            'branch' => [
                 'name', // column enabled to search
             ],
         ];
@@ -67,18 +67,20 @@ final class AgentTable extends PowerGridComponent
     public function fields(): PowerGridFields
     {
         return PowerGrid::fields()
-        ->add('id')
-        // SHOW RELATIONSHIP DATA 
-        ->add('branch_id', function ($agent) {
-            return e($agent->branch->name);
-        })
-        ->add('name')
-        ->add('status')
-        ->add('account')
-        ->add('created_at')
-        ->add('created_at_formatted', function ($agent) {
-            return e(Carbon::parse($agent->created_at)->translatedFormat('l, d F Y'));
-        });
+            ->add('id')
+            // SHOW RELATIONSHIP DATA 
+            ->add('branch_id', function ($agent)
+            {
+                return e($agent->branch->name);
+            })
+            ->add('name')
+            ->add('status')
+            ->add('account')
+            ->add('created_at')
+            ->add('created_at_formatted', function ($agent)
+            {
+                return e(Carbon::parse($agent->created_at)->translatedFormat('l, d F Y'));
+            });
     }
 
     public function columns(): array
@@ -165,7 +167,13 @@ final class AgentTable extends PowerGridComponent
                 ->slot('Edit')
                 ->id()
                 ->class('btn btn-outline-primary')
-                ->dispatch('open-edit-agent-modal', ['agentID' => $row->id, 'branchID' => $row->branch_id, 'agentName' => $row->name, 'agentStatus' => $row->status, 'agentAccount' => $row->account]),
+                ->dispatch('open-edit-agent-modal', [
+                    'agentID' => $row->id,
+                    'branchID' => $row->branch_id,
+                    'agentName' => $row->name,
+                    'agentStatus' => $row->status,
+                    'agentAccount' => $row->account
+                ]),
         ];
     }
 }

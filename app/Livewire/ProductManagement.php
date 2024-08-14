@@ -13,6 +13,8 @@ class ProductManagement extends Component
 {
     use WithFileUploads;
 
+    public $mode = 'ADD';
+
     #[Validate('required', message: 'Please provide a file')]
     #[Validate('mimes:xlsx,xls', message: 'Please provide a valid .xlsx file')]
     public $file;
@@ -31,6 +33,11 @@ class ProductManagement extends Component
     public $isFileValidated = false;
     public $productIDValidated = false;
     public $productDescriptionValidated = false;
+
+    public function resetComponent() 
+    {
+        $this->reset();
+    }
 
     public function render()
     {
@@ -122,6 +129,54 @@ class ProductManagement extends Component
         catch (\Throwable $th)
         {
             session()->flash('error', 'Gagal menambahkan produk baru. Pastikan data yang anda masukkan sudah benar!');
+
+            $this->dispatch('auto-close-error-alert');
+
+            throw $th;
+        }
+    }
+
+    #[\Livewire\Attributes\On('open-edit-product-modal')]
+    public function prepareEditProduct($productID, $productDescription)
+    {
+        $this->mode = 'EDIT';
+
+        $this->productID = $productID;
+        $this->productDescription = $productDescription;
+    }
+
+    public function editExistingProduct()
+    {
+        try
+        {
+            $this->validate(
+                [
+                    'productDescription' => 'required|string'
+                ],
+                [
+                    'productDescription.required' => 'Deskripsi produk tidak boleh kosong!',
+                    'productDescription.string' => 'Deskripsi produk harus berupa teks!'
+                ]
+            );
+
+            Product::query()->updateOrCreate(
+                [
+                    'id' => $this->productID,
+                ],
+                [
+                    'description' => $this->productDescription
+                ]
+            );
+
+            session()->flash('success', 'Berhasil memperbarui data produk!');
+
+            $this->dispatch('hide-add-product-modal', ['id' => $this->productID]);
+
+            $this->reset();
+        }
+        catch (\Throwable $th)
+        {
+            session()->flash('error', 'Gagal memperbarui data produk. Pastikan data yang anda masukkan sudah benar!');
 
             $this->dispatch('auto-close-error-alert');
 

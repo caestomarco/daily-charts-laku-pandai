@@ -37,7 +37,6 @@ class AgentManagement extends Component
     #[Validate('max:255', message: 'Nama agen tidak boleh lebih dari 255 karakter!')]
     public $agentName;
 
-    #[Validate('required', message: 'Rekening agen tidak boleh kosong!')]
     #[Validate('numeric', message: 'Rekening agen harus berupa angka!')]
     #[Validate('digits:14', message: 'Rekening agen harus 14 digit!')]
     public $agentAccount;
@@ -135,7 +134,6 @@ class AgentManagement extends Component
                     'agentName.required' => 'Nama agen tidak boleh kosong!',
                     'agentName.string' => 'Nama agen harus berupa teks!',
                     'agentName.max' => 'Nama agen tidak boleh lebih dari 255 karakter!',
-                    'agentAccount.required' => 'Rekening agen tidak boleh kosong!',
                     'agentAccount.numeric' => 'Rekening agen harus berupa angka!',
                     'agentAccount.digits' => 'Rekening agen harus 14 digit!',
                     'agentStatus.required' => 'Status agen tidak boleh kosong!',
@@ -202,7 +200,6 @@ class AgentManagement extends Component
                     'agentName.required' => 'Nama agen tidak boleh kosong!',
                     'agentName.string' => 'Nama agen harus berupa teks!',
                     'agentName.max' => 'Nama agen tidak boleh lebih dari 255 karakter!',
-                    'agentAccount.required' => 'Rekening agen tidak boleh kosong!',
                     'agentAccount.numeric' => 'Rekening agen harus berupa angka!',
                     'agentAccount.digits' => 'Rekening agen harus 14 digit!',
                     'agentStatus.required' => 'Status agen tidak boleh kosong!',

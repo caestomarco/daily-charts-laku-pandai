@@ -13,6 +13,8 @@ class BranchManagement extends Component
 {
     use WithFileUploads;
 
+    public $mode = 'ADD';
+
     #[Validate('required', message: 'Please provide a file')]
     #[Validate('mimes:xlsx,xls', message: 'Please provide a valid .xlsx file')]
     public $file;
@@ -36,6 +38,11 @@ class BranchManagement extends Component
     public $branchIDValidated = false;
     public $branchNameValidated = false;
     public $branchStatusValidated = true;
+
+    public function resetComponent() 
+    {
+        $this->reset();
+    }
 
     public function render()
     {
@@ -137,6 +144,60 @@ class BranchManagement extends Component
         catch (\Throwable $th)
         {
             session()->flash('error', 'Gagal menambahkan data kantor cabang baru. Pastikan data yang anda masukkan sudah benar!');
+
+            $this->dispatch('auto-close-error-alert', ['id' => $this->branchID]);
+
+            throw $th;
+        }
+    }
+
+    #[\Livewire\Attributes\On('open-edit-branch-modal')]
+    public function prepareEditBranch($branchID, $branchName, $branchStatus)
+    {
+        $this->mode = 'EDIT';
+
+        $this->branchID = $branchID;
+        $this->branchName = $branchName;
+        $this->branchStatus = $branchStatus === 'OPEN' ? true : false;
+    }
+
+    public function editExistingBranch() 
+    {
+        try
+        {
+            $this->validate(
+                [
+                    'branchName' => 'required|string|max:255',
+                    'branchStatus' => 'required|boolean',
+                ],
+                [
+                    'branchName.required' => 'Nama kantor cabang tidak boleh kosong!',
+                    'branchName.string' => 'Nama kantor cabang harus berupa teks!',
+                    'branchName.max' => 'Nama kantor cabang tidak boleh lebih dari 255 karakter!',
+                    'branchStatus.required' => 'Status kantor cabang tidak boleh kosong!',
+                    'branchStatus.boolean' => 'Status kantor cabang harus berupa OPEN atau CLOSE!',
+                ]
+            );
+
+            Branch::query()->updateOrCreate(
+                [
+                    'id' => $this->branchID,
+                ],
+                [
+                    'name' => $this->branchName,
+                    'status' => $this->branchStatus ? 'OPEN' : 'CLOSE',
+                ]
+            );
+
+            session()->flash('success', 'Berhasil memperbarui data kantor cabang!');
+
+            $this->dispatch('hide-add-branch-modal', ['id' => $this->branchID]);
+
+            $this->reset();
+        }
+        catch (\Throwable $th)
+        {
+            session()->flash('error', 'Gagal memperbarui data cabang. Pastikan data yang anda masukkan sudah benar!');
 
             $this->dispatch('auto-close-error-alert', ['id' => $this->branchID]);
 

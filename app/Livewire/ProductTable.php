@@ -115,12 +115,6 @@ final class ProductTable extends PowerGridComponent
         ]);
     }
 
-    #[\Livewire\Attributes\On('edit')]
-    public function edit($rowId): void
-    {
-        $this->js('alert(' . $rowId . ')');
-    }
-
     #[\Livewire\Attributes\On('bulkDelete.{tableName}')]
     public function bulkDelete(): void
     {
@@ -146,7 +140,10 @@ final class ProductTable extends PowerGridComponent
                 ->slot('Edit')
                 ->id()
                 ->class('btn btn-outline-primary')
-                ->dispatch('edit', ['rowId' => $row->id])
+                ->dispatch('open-edit-product-modal', [
+                    'productID' => $row->id,
+                    'productDescription' => $row->description,
+                ])
         ];
     }
 

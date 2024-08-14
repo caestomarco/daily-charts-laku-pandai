@@ -57,8 +57,8 @@
                     <div class="modal-body">
                         {{-- GUIDANCE --}}
                         <div class="alert alert-warning" role="alert">
-                            Anda dapat menambahkan data produk secara <span class="fst-italic">otomatis</span> dengan meng-upload file .xlsx seperti contoh <a href="#"
-                                class="alert-link" @click="$wire.downloadFile">berikut</a>.
+                            Anda dapat menambahkan data produk secara <span class="fst-italic">otomatis</span> dengan meng-upload file .xlsx seperti contoh <a href="#" class="alert-link"
+                                @click="$wire.downloadFile">berikut</a>.
                         </div>
 
                         {{-- FILE --}}
@@ -87,14 +87,14 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="add-product-label">Tambah Produk Baru</h1>
+                    <h1 class="modal-title fs-5" id="add-product-label">{{ $mode === 'EDIT' ? 'Edit Data Produk' : 'Tambah Produk Baru' }}</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form wire:submit.prevent="addNewProduct" class="needs-validation justify-content-end" enctype="multipart/form-data" novalidate>
+                <form wire:submit.prevent="{{ $mode === 'EDIT' ? 'editExistingProduct' : 'addNewProduct' }}" class="needs-validation justify-content-end" enctype="multipart/form-data" novalidate>
                     {{-- FORM CONTENT --}}
                     <div class="modal-body">
                         {{-- GUIDANCE --}}
-                        <div class="alert alert-warning" role="alert">
+                        <div class="alert alert-warning" role="alert" :class="{ 'd-none': $wire.mode === 'EDIT' }">
                             Anda dapat menambahkan data produk secara <span class="fst-italic">manual</span> dengan mengisi form berikut.
                         </div>
 
@@ -143,6 +143,11 @@
 @push('additional-script')
     <script>
         (() => {
+            // OPEN EDIT MODAL
+            window.addEventListener('open-edit-product-modal', (event) => {
+                new window.bootstrap.Modal(document.getElementById('add-product-modal')).show();
+            });
+
             // HIDE ADD PRODUCT MODAL & SUCCESS ALERT ON SUCCESSFUL SUBMISSION
             window.addEventListener('hide-add-product-modal', (event) => {
                 window.bootstrap.Modal.getInstance(document.getElementById('add-product-modal')).hide();
@@ -170,3 +175,12 @@
         })();
     </script>
 @endpush
+
+@script
+    <script>
+        // RESET MODAL ON CLOSE
+        window.addEventListener('hide.bs.modal', (event) => {
+            $wire.resetComponent();
+        });
+    </script>
+@endscript

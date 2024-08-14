@@ -123,7 +123,8 @@ final class BranchTable extends PowerGridComponent
     public function bulkDelete(): void
     {
         $this->js('alert(window.pgBulkActions.get(\'' . $this->tableName . '\'))');
-        if($this->checkboxValues){
+        if ($this->checkboxValues)
+        {
             Branch::destroy($this->checkboxValues);
             $this->js('window.pgBulkActions.clearAll()'); // clear the count on the interface.
         }
@@ -143,7 +144,11 @@ final class BranchTable extends PowerGridComponent
                 ->slot('Edit')
                 ->id()
                 ->class('btn btn-outline-primary')
-                ->dispatch('edit', ['rowId' => $row->id])
+                ->dispatch('open-edit-branch-modal', [
+                    'branchID' => $row->id,
+                    'branchName' => $row->name,
+                    'branchStatus' => $row->status,
+                ]),
         ];
     }
 }

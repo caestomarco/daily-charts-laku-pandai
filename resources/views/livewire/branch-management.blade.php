@@ -56,9 +56,9 @@
                 <form wire:submit.prevent="submitFile" class="needs-validation justify-content-end" enctype="multipart/form-data" novalidate>
                     <div class="modal-body">
                         {{-- GUIDANCE --}}
-                        <div class="alert alert-warning" role="alert">
-                            Anda dapat menambahkan data kantor cabang secara <span class="fst-italic">otomatis</span> dengan meng-upload file .xlsx seperti contoh <a href="#"
-                                class="alert-link" @click="$wire.downloadFile">berikut</a>.
+                        <div class="alert alert-warning " role="alert" >
+                            Anda dapat menambahkan data kantor cabang secara <span class="fst-italic">otomatis</span> dengan meng-upload file .xlsx seperti contoh <a href="#" class="alert-link"
+                                @click="$wire.downloadFile">berikut</a>.
                         </div>
 
                         {{-- FILE --}}
@@ -87,29 +87,31 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="add-branch-label">Tambah Kantor Cabang Baru</h1>
+                    <h1 class="modal-title fs-5" id="add-branch-label">{{ $mode === 'EDIT' ? 'Edit Data Kantor Cabang' : 'Tambah Kantor Cabang Baru' }}</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form wire:submit.prevent="addNewBranch" class="needs-validation justify-content-end" enctype="multipart/form-data" novalidate>
+                <form wire:submit.prevent="{{ $mode === 'EDIT' ? 'editExistingBranch' : 'addNewBranch' }}" class="needs-validation justify-content-end" enctype="multipart/form-data" novalidate>
                     <div class="modal-body">
                         {{-- GUIDANCE --}}
-                        <div class="alert alert-warning" role="alert">
+                        <div class="alert alert-warning" role="alert" :class="{ 'd-none': $wire.mode === 'EDIT' }">
                             Anda dapat menambahkan data kantor cabang secara <span class="fst-italic">manual</span> dengan mengisi form berikut.
                         </div>
 
                         {{-- ID --}}
-                        <div class="form-floating mb-3">
-                            <input class="form-control @error('branchID') is-invalid @elseif($branchIDValidated) is-valid @enderror" id="branch-id" placeholder="" type="text"
-                                wire:model.blur="branchID">
-                            <label for="branch-id">Kode Kantor Cabang</label>
-                            <div class="valid-feedback">
-                                Kode kantor cabang valid!
+                        @if ($mode === 'ADD')
+                            <div class="form-floating mb-3">
+                                <input class="form-control @error('branchID') is-invalid @elseif($branchIDValidated) is-valid @enderror" id="branch-id" placeholder="" type="text"
+                                    wire:model.blur="branchID">
+                                <label for="branch-id">Kode Kantor Cabang</label>
+                                <div class="valid-feedback">
+                                    Kode kantor cabang valid!
+                                </div>
+                                @error('branchID')
+                                    <div class="invalid-feedback"> {{ $message }} </div>
+                                @enderror
+                                <div id="emailHelp" class="form-text">Contoh Kode Kantor Cabang: 001</div>
                             </div>
-                            @error('branchID')
-                                <div class="invalid-feedback"> {{ $message }} </div>
-                            @enderror
-                            <div id="emailHelp" class="form-text">Contoh Kode Kantor Cabang: 001</div>
-                        </div>
+                        @endif
 
                         {{-- NAME --}}
                         <div class="form-floating mb-3">
@@ -149,6 +151,11 @@
 @push('additional-script')
     <script>
         (() => {
+            // OPEN EDIT MODAL
+            window.addEventListener('open-edit-branch-modal', (event) => {
+                new window.bootstrap.Modal(document.getElementById('add-branch-modal')).show();
+            });
+
             // HIDE ADD BRANCH MODAL & SUCCESS ALERT ON SUCCESSFUL SUBMISSION
             window.addEventListener('hide-add-branch-modal', (event) => {
                 window.bootstrap.Modal.getInstance(document.getElementById('add-branch-modal')).hide();
@@ -176,3 +183,12 @@
         })();
     </script>
 @endpush
+
+@script
+    <script>
+        // RESET MODAL ON CLOSE
+        window.addEventListener('hide.bs.modal', (event) => {
+            $wire.resetComponent();
+        });
+    </script>
+@endscript
