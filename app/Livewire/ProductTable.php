@@ -133,7 +133,8 @@ final class ProductTable extends PowerGridComponent
     }
 
     #[\Livewire\Attributes\On('pg:eventRefresh-ProductTable')]
-    public function importedData(): void
+    #[\Livewire\Attributes\On('hide-add-product-modal')]
+    public function onUpdate(): void
     {
         $this->fillData();
     }

@@ -58,18 +58,6 @@ class AgentManagement extends Component
         $this->reset();
     }
 
-    #[\Livewire\Attributes\On('open-edit-agent-modal')]
-    public function prepareEditAgent($agentID, $branchID, $agentName, $agentStatus, $agentAccount)
-    {
-        $this->mode = 'EDIT';
-
-        $this->agentID = $agentID;
-        $this->branchID = $branchID;
-        $this->agentName = $agentName;
-        $this->agentStatus = $agentStatus === 'ACTIVE' ? true : false;
-        $this->agentAccount = $agentAccount;
-    }
-
     public function render()
     {
         $title = "Manajemen Agen";
@@ -169,7 +157,7 @@ class AgentManagement extends Component
 
             session()->flash('success', 'Berhasil menambahkan data agen baru!');
 
-            $this->dispatch('hide-add-agent-modal', ['id' => $this->branchID]);
+            $this->dispatch('hide-add-agent-modal', ['id' => $this->agentID]);
 
             $this->reset();
         }
@@ -177,30 +165,36 @@ class AgentManagement extends Component
         {
             session()->flash('error', 'Gagal menambahkan data agen baru. Pastikan data yang anda masukkan sudah benar!');
 
-            $this->dispatch('auto-close-error-alert', ['id' => $this->branchID]);
+            $this->dispatch('auto-close-error-alert', ['id' => $this->agentID]);
 
             throw $th;
         }
     }
 
+    #[\Livewire\Attributes\On('open-edit-agent-modal')]
+    public function prepareEditAgent($agentID, $branchID, $agentName, $agentStatus, $agentAccount)
+    {
+        $this->mode = 'EDIT';
+
+        $this->agentID = $agentID;
+        $this->branchID = $branchID;
+        $this->agentName = $agentName;
+        $this->agentStatus = $agentStatus === 'ACTIVE' ? true : false;
+        $this->agentAccount = $agentAccount;
+    }
+
     public function editExistingAgent()
     {
-        dd("here");
         try
         {
             $this->validate(
                 [
-                    'agentID' => 'required|numeric|unique:agents,id|digits:12',
                     'branchID' => 'required|numeric|exists:branches,id|digits:3',
                     'agentName' => 'required|string|max:255',
                     'agentAccount' => 'required|numeric|digits:14',
                     'agentStatus' => 'required|boolean',
                 ],
                 [
-                    'agentID.required' => 'Kode agen tidak boleh kosong!',
-                    'agentID.numeric' => 'Kode agen cabang harus berupa angka!',
-                    'agentID.unique' => 'Kode agen sudah ada!',
-                    'agentID.digits' => 'Kode agen harus 12 digit!',
                     'branchID.required' => 'Kode kantor cabang tidak boleh kosong!',
                     'branchID.numeric' => 'Kode kantor cabang harus berupa angka!',
                     'branchID.exists' => 'Kode kantor cabang tidak ditemukan!',
@@ -230,7 +224,7 @@ class AgentManagement extends Component
 
             session()->flash('success', 'Berhasil memperbarui data agen!');
 
-            $this->dispatch('hide-add-agent-modal', ['id' => $this->branchID]);
+            $this->dispatch('hide-add-agent-modal', ['id' => $this->agentID]);
 
             $this->reset();
         }
@@ -238,7 +232,7 @@ class AgentManagement extends Component
         {
             session()->flash('error', 'Gagal memperbarui data agen. Pastikan data yang anda masukkan sudah benar!');
 
-            $this->dispatch('auto-close-error-alert', ['id' => $this->branchID]);
+            $this->dispatch('auto-close-error-alert', ['id' => $this->agentID]);
 
             throw $th;
         }

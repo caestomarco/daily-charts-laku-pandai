@@ -23,7 +23,7 @@ final class AgentTable extends PowerGridComponent
 
     public string $tableName = 'agents';
 
-    public array $name;
+    public array $name, $account;
 
     public function setUp(): array
     {
@@ -127,6 +127,7 @@ final class AgentTable extends PowerGridComponent
     {
         return [
             'name.*' => ['required', 'string', 'max:255'],
+            'account.*' => ['required', 'numeric', 'digits:14'],
         ];
     }
 
@@ -151,7 +152,8 @@ final class AgentTable extends PowerGridComponent
     }
 
     #[\Livewire\Attributes\On('pg:eventRefresh-AgentTable')]
-    public function importedData(): void
+    #[\Livewire\Attributes\On('hide-add-agent-modal')]
+    public function onUpdate(): void
     {
         $this->fillData();
     }

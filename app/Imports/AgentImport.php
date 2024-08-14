@@ -33,10 +33,10 @@ class AgentImport implements ToCollection
                     ],
                     [
                         'branch_id' => $row[1],
-                        'name' => $row[2] ?? "Agen Tanpa Nama",
-                        'status' => $row[4],
+                        'name' => $row[3] ?? "Agen Tanpa Nama",
+                        'status' => $row[5],
                         // CREATE A FORMATTED DATE FROM THE IMPORTED DATE
-                        'created_at' => Carbon::create(Str::of($row[3])->replace('/', '-')->toString())->format('Y-m-d H:i:s')
+                        'created_at' => Carbon::create(Str::of($row[4])->replace('/', '-')->toString())->format('Y-m-d H:i:s')
                     ]
                 );
             }

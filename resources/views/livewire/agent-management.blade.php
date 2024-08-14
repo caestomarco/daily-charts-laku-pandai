@@ -99,18 +99,20 @@
                         </div>
 
                         {{-- ID --}}
-                        <div class="form-floating mb-3">
-                            <input class="form-control @error('agentID') is-invalid @elseif($agentIDValidated) is-valid @enderror" id="agent-id" placeholder="" type="text"
-                                wire:model.blur="agentID">
-                            <label for="agent-id">Kode Agen</label>
-                            <div class="valid-feedback">
-                                Kode agen valid!
+                        @if ($mode === 'ADD')
+                            <div class="form-floating mb-3">
+                                <input class="form-control @error('agentID') is-invalid @elseif($agentIDValidated) is-valid @enderror" id="agent-id" placeholder="" type="text"
+                                    wire:model.blur="agentID">
+                                <label for="agent-id">Kode Agen</label>
+                                <div class="valid-feedback">
+                                    Kode agen valid!
+                                </div>
+                                @error('agentID')
+                                    <div class="invalid-feedback"> {{ $message }} </div>
+                                @enderror
+                                <div id="agent-id-example" class="form-text">Contoh Kode Agen: 200722000001 (12 Digit)</div>
                             </div>
-                            @error('agentID')
-                                <div class="invalid-feedback"> {{ $message }} </div>
-                            @enderror
-                            <div id="agent-id-example" class="form-text">Contoh Kode Agen: 200722000001 (12 Digit)</div>
-                        </div>
+                        @endif
 
                         {{-- ACCOUNT --}}
                         <div class="form-floating mb-3">
@@ -186,7 +188,6 @@
         (() => {
             // OPEN EDIT MODAL
             window.addEventListener('open-edit-agent-modal', (event) => {
-                console.log(event.detail)
                 new window.bootstrap.Modal(document.getElementById('add-agent-modal')).show();
             });
 

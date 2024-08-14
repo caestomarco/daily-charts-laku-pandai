@@ -130,7 +130,8 @@ final class BranchTable extends PowerGridComponent
     }
 
     #[\Livewire\Attributes\On('pg:eventRefresh-BranchTable')]
-    public function importedData(): void
+    #[\Livewire\Attributes\On('hide-add-branch-modal')]
+    public function onUpdate(): void
     {
         $this->fillData();
     }

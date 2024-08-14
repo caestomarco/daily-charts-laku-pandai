@@ -127,8 +127,6 @@ class Dashboard extends Component
 
             $this->getDailyTransactions();
 
-            dd($this->chartLabels, $this->chartDatasets);
-
             session()->flash('success', 'Berhasil mengimpor data transaksi!');
 
             $this->dispatch('hide-import-daily-transaction-modal');
@@ -163,6 +161,8 @@ class Dashboard extends Component
 
     private function getDailyTransactions()
     {
+        $this->reset('totalDailyNominals', 'totalDailyTransactions', 'totalToday', 'todayTopTransaction', 'isChartStonk', 'isThereNewAgent');
+
         $thisMonthDailyTransactions = DailyTransaction::query()
             ->whereMonth('created_at', $this->currentMonth)
             ->whereYear('created_at', now()->year)
@@ -172,7 +172,7 @@ class Dashboard extends Component
             {
                 return $transaction->created_at->format('d/m/Y');
             });
-
+        
         foreach ($thisMonthDailyTransactions as $transaction)
         {
             $this->totalDailyTransactions[] = $transaction->count();
