@@ -81,25 +81,23 @@
                 <div class="alert alert-primary mb-0">
                     <h3 class="fw-semibold">Informasi Dashboard</h3>
                     <ul class="mb-0">
-                        <li class="fs-5">Data yang digunakan adalah data transaksi <strong>LAKU PANDAI</strong> pada tanggal <strong>{{ $currentDate->translatedFormat('l, d F Y') }}</strong> hingga pukul
-                            <strong>16.00
-                                WIB</strong>.
+                        <li class="fs-5">Data yang digunakan adalah data transaksi <strong class="text-primary">LAKU PANDAI</strong> pada tanggal <strong
+                                class="text-primary">{{ $currentDate->translatedFormat('l, d F Y') }}</strong> hingga pukul <strong class="text-primary">16.00 WIB</strong>. </li>
+                        <li class="fs-5">Tercatat <strong class="text-primary">{{ number_format($totalToday['transactions'], '0', '.', ',') }} transaksi</strong> dengan total nominal
+                            <strong class="text-primary">Rp.{{ number_format($totalToday['nominals'], '0', '.', ',') }}</strong>. (Gambar 1)
                         </li>
-                        <li class="fs-5">Tercatat <strong>{{ number_format($totalToday['transactions'], '0', '.', ',') }} transaksi</strong> dengan total nominal
-                            <strong>{{ number_format($totalToday['nominals'], '0', '.', ',') }}</strong>. (Gambar 1)
-                        </li>
-                        <li class="fs-5">Fitur yang paling banyak ditransaksikan adalah <strong>{{ $todayTopTransaction['product_name'] }}</strong> sebanyak
-                            <strong>{{ number_format($todayTopTransaction['product_count'], '0', '.', ',') }}
+                        <li class="fs-5">Fitur yang paling banyak ditransaksikan adalah <strong class="text-primary">{{ $todayTopTransaction['product_name'] }}</strong> sebanyak
+                            <strong class="text-primary">{{ number_format($todayTopTransaction['product_count'], '0', '.', ',') }}
                                 transaksi</strong>. (Gambar 2)
                         </li>
-                        <li class="fs-5">Agen yang melakukan transaksi terbanyak adalah agen di bawah <strong>Unit Kantor {{ $todayTopTransaction['agent_branch'] }} </strong> sebanyak
-                            <strong>{{ number_format($todayTopTransaction['agent_count'], '0', '.', ',') }} transaksi</strong> dengan total nominal
-                            <strong>{{ number_format($todayTopTransaction['agent_nominals'], '0', '.', ',') }}</strong> dari total
-                            <strong>{{ number_format($todayTopTransaction['agent_total'], '0', '.', ',') }} agen</strong>
+                        <li class="fs-5">Agen yang melakukan transaksi terbanyak adalah agen di bawah <strong class="text-primary">Unit Kantor {{ $todayTopTransaction['agent_branch'] }} </strong> sebanyak
+                            <strong class="text-primary">{{ number_format($todayTopTransaction['agent_count'], '0', '.', ',') }} transaksi</strong> dengan total nominal
+                            <strong class="text-primary">{{ number_format($todayTopTransaction['agent_nominals'], '0', '.', ',') }}</strong> dari total
+                            <strong class="text-primary">{{ number_format($todayTopTransaction['agent_total'], '0', '.', ',') }} agen</strong>
                             yang melakukan transaksi. (Gambar 3)
                         </li>
-                        <li class="fs-5">Tren transaksi <strong>{{ $isChartStonk ? 'NAIK' : 'TURUN' }}</strong> dibanding hari sebelumnya.</li>
-                        <li class="fs-5"><strong :class="{'text-danger': !$wire.isThereNewAgent}" >{{ $isThereNewAgent ? 'ADA' : 'TIDAK ADA' }}</strong> penambahan agen SUMUT LINK.</li>
+                        <li class="fs-5">Tren transaksi <strong class="text-primary">{{ $isChartStonk ? 'NAIK' : 'TURUN' }}</strong> dibanding hari sebelumnya.</li>
+                        <li class="fs-5"><strong :class="{ 'text-danger': !$wire.isThereNewAgent }">{{ $isThereNewAgent ? 'ADA' : 'TIDAK ADA' }}</strong> penambahan agen SUMUT LINK.</li>
                     </ul>
                 </div>
             @endif
@@ -441,7 +439,7 @@
                             title: {
                                 color: '#010101',
                                 display: true,
-                                text: '10 Transaksi Terbesar Laku Pandai' ,
+                                text: '10 Transaksi Terbesar Laku Pandai',
                                 font: {
                                     size: 32,
                                     weight: 'bold'

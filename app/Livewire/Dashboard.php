@@ -120,7 +120,6 @@ class Dashboard extends Component
         try
         {
             $this->validateOnly('file');
-
             $this->file->storeAs('files', $this->file->getClientOriginalName());
 
             Excel::import(new DailyTransactionsImport, storage_path('app/files/' . $this->file->getClientOriginalName()));
@@ -130,14 +129,12 @@ class Dashboard extends Component
             session()->flash('success', 'Berhasil mengimpor data transaksi!');
 
             $this->dispatch('hide-import-daily-transaction-modal');
-
             $this->dispatch('update-daily-transactions-chart', [
                 'labels' => $this->chartLabels,
                 'datasets' => $this->chartDatasets,
                 'currentDate' => $this->currentDate,
                 'selectedChart' => $this->chartList[0],
             ]);
-
             $this->reset('file', 'isFileValidated');
         }
         catch (\Throwable $th)
