@@ -90,7 +90,8 @@
                             <strong class="text-primary">{{ number_format($todayTopTransaction['product_count'], '0', '.', ',') }}
                                 transaksi</strong>. (Gambar 2)
                         </li>
-                        <li class="fs-5">Agen yang melakukan transaksi terbanyak adalah agen di bawah <strong class="text-primary">Unit Kantor {{ $todayTopTransaction['agent_branch'] }} </strong> sebanyak
+                        <li class="fs-5">Agen yang melakukan transaksi terbanyak adalah agen di bawah <strong class="text-primary">Unit Kantor {{ $todayTopTransaction['agent_branch'] }} </strong>
+                            sebanyak
                             <strong class="text-primary">{{ number_format($todayTopTransaction['agent_count'], '0', '.', ',') }} transaksi</strong> dengan total nominal
                             <strong class="text-primary">{{ number_format($todayTopTransaction['agent_nominals'], '0', '.', ',') }}</strong> dari total
                             <strong class="text-primary">{{ number_format($todayTopTransaction['agent_total'], '0', '.', ',') }} agen</strong>
@@ -266,14 +267,6 @@
                     },
                     options: {
                         responsive: true,
-                        layout: {
-                            padding: {
-                                top: 20,
-                                right: 20,
-                                bottom: 20,
-                                left: 20
-                            }
-                        },
                         plugins: {
                             datalabels: {
                                 // anchor: 'end',
@@ -327,6 +320,7 @@
                         },
                         scales: {
                             x: {
+                                display: false,
                                 border: {
                                     display: false,
                                     width: 0
